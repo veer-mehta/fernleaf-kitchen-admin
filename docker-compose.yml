@@ -6,9 +6,10 @@ services:
       POSTGRES_PASSWORD: kitchen
       POSTGRES_DB: kitchen
     ports:
-      - "5433:5432"
+      - "127.0.0.1:5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      # dev-only credentials; the port is bound to localhost so nothing outside this machine can reach it
       # runs once on first start: creates the separate test database
       - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     healthcheck:
