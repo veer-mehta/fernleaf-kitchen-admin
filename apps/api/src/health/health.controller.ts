@@ -1,9 +1,10 @@
 import { Controller, Get } from "@nestjs/common";
+import { Public } from "../auth/public.decorator";
 
 @Controller("health")
 export class HealthController {
-  // No auth here on purpose: uptime pings and the deploy warm-up step call this.
-  // (Task 4 adds a global guard; this route is marked @Public there.)
+  // Public on purpose: uptime pings and the deploy warm-up step call this.
+  @Public()
   @Get()
   check() {
     return { ok: true };
