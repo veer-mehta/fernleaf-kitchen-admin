@@ -1,0 +1,11 @@
+.remember
+CLAUDE.md
+AGENTS.md
+docs/
+.superpowers/
+.superpowers/
+.env
+node_modules/
+dist/
+.next/
+*.tsbuildinfo

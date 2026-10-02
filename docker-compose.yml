@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: kitchen
+      POSTGRES_PASSWORD: kitchen
+      POSTGRES_DB: kitchen
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # runs once on first start: creates the separate test database
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kitchen"]
+      interval: 5s
+      retries: 10
+volumes:
+  pgdata:
