@@ -14,7 +14,8 @@
     "db:migrate": "dotenv run -q -f ../../.env -- prisma migrate dev",
     "db:deploy": "dotenv run -q -f ../../.env -- prisma migrate deploy",
     "db:test": "dotenv run -q -f ../../.env -- sh -c 'DATABASE_URL=$TEST_DATABASE_URL prisma migrate deploy'",
-    "db:seed": "dotenv run -q -f ../../.env -- prisma db seed"
+    "db:seed": "dotenv run -q -f ../../.env -- prisma db seed",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@fernleaf/shared": "workspace:*",
