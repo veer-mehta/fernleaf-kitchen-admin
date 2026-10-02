@@ -5,7 +5,8 @@
     "dev": "pnpm -r --parallel dev",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r test"
+    "test": "pnpm -r test",
+    "prepare": "pnpm --filter @fernleaf/shared build"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
