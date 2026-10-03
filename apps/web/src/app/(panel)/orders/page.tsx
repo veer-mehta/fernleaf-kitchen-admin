@@ -52,7 +52,7 @@ export default function OrdersPage() {
   const { data: companies } = useQuery({
     queryKey: ["companies", "all"],
     queryFn: () => apiGet<Paged<CompanyListItem>>("/companies?pageSize=100"),
-    retry: false, // roles without companies:read just get no company filter
+    enabled: can(PERMISSIONS.COMPANIES_READ), // roles without companies:read get no company filter
   });
 
   const set = (key: keyof typeof filters) => (value: string) => { setFilters({ ...filters, [key]: value }); setPage(1); };
