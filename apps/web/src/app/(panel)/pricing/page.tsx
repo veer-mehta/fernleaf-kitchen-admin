@@ -139,7 +139,7 @@ export default function PricingPage() {
   const selected = tiers.find((t) => t.id === selectedId) ?? tiers.find((t) => t.isDefault) ?? tiers[0];
 
   return (
-    <div className="max-w-5xl space-y-4">
+    <div className="space-y-4">
       <h1 className="text-xl font-semibold">Pricing tiers</h1>
       <div className="flex flex-wrap items-center gap-2">
         {tiers.map((t) => (

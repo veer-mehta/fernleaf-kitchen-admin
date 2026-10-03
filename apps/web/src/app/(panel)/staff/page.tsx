@@ -88,7 +88,7 @@ export default function StaffPage() {
 
   if (error) return <p className="text-destructive">{error.message}</p>;
   return (
-    <div className="max-w-5xl space-y-4">
+    <div className="space-y-4">
       <h1 className="text-xl font-semibold">Staff</h1>
       <p className="text-sm text-muted-foreground">Each person has exactly one role. What a role may do is set in the database (roles and permissions), not in code.</p>
       {canEdit && <NewStaff roles={roles} />}

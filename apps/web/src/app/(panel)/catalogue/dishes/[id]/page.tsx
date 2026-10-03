@@ -144,7 +144,7 @@ export default function DishPage({ params }: { params: Promise<{ id: string }> }
   if (!isNew && !dish) return <p className="text-muted-foreground">Loading…</p>;
 
   return (
-    <div className="max-w-4xl space-y-4">
+    <div className="space-y-4">
       <Link className="text-sm underline" href="/catalogue/dishes">← All dishes</Link>
       {/* key remounts the form when a different dish loads, so its fields restart from that dish */}
       <DishForm key={dish?.id ?? "new"} dish={dish ?? null} />

@@ -29,7 +29,7 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
   if (!order) return <p className="text-muted-foreground">Loading…</p>;
 
   return (
-    <div className="max-w-4xl space-y-4">
+    <div className="space-y-4">
       <Link className="text-sm underline" href="/orders">← All orders</Link>
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-xl font-semibold">Order #{order.id}</h1>

@@ -13,7 +13,7 @@ export default function HomePage() {
 
   const admin = can(PERMISSIONS.DASHBOARD_ADMIN);
   return (
-    <div className="max-w-5xl space-y-4">
+    <div className="space-y-4">
       <div>
         <h1 className="text-xl font-semibold">Welcome, {me.name}</h1>
         <p className="text-sm text-muted-foreground">{me.role} dashboard</p>

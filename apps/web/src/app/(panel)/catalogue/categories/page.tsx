@@ -48,7 +48,7 @@ export default function CategoriesPage() {
   });
 
   return (
-    <div className="max-w-4xl space-y-4">
+    <div className="space-y-4">
       <h1 className="text-xl font-semibold">Menu categories</h1>
       <p className="text-sm text-muted-foreground">
         Employees see dishes through these categories. A <b>secret</b> category is not listed, but its dishes can still be ordered by staff searching for them.

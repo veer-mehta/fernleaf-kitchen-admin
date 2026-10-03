@@ -99,7 +99,7 @@ export default function DispatchPage() {
   const { data: drivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: () => apiGet<{ id: number; name: string }[]>("/drivers") });
 
   return (
-    <div className="max-w-4xl space-y-4">
+    <div className="space-y-4">
       <h1 className="text-xl font-semibold">Dispatch board</h1>
       <div className="flex flex-wrap items-end gap-3">
         <label className="space-y-1 text-sm"><span className="block text-xs text-muted-foreground">Delivery date</span>

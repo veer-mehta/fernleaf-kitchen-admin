@@ -11,6 +11,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  devIndicators: false, // hides the round Next.js badge in the corner during development
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

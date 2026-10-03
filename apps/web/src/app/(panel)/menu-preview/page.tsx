@@ -26,7 +26,7 @@ export default function MenuPreviewPage() {
   });
 
   return (
-    <div className="max-w-4xl space-y-4">
+    <div className="space-y-4">
       <h1 className="text-xl font-semibold">Menu preview</h1>
       <p className="text-sm text-muted-foreground">The menu exactly as this employee sees it: their company’s price tier, hidden items removed, dishes without a price left out.</p>
       <div className="flex flex-wrap gap-2">

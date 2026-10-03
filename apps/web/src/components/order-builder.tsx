@@ -151,7 +151,7 @@ export function OrderBuilder({ existing }: { existing?: OrderDetail }) {
     : [];
 
   return (
-    <div className="max-w-4xl space-y-4">
+    <div className="space-y-4">
       <h1 className="text-xl font-semibold">{existing ? `Edit order #${existing.id}` : "New order"}</h1>
 
       {problems.length > 0 && (
