@@ -34,7 +34,8 @@ export class KitchenService {
     const date = query.date ?? kitchenToday(now, timezone);
 
     const where: Prisma.PrepUnitWhereInput = {
-      combination: { line: { order: { deliveryDate: fromDateString(date), status: "CONFIRMED" } } },
+      // Delivered orders stay on the board (their units are all done) so the day's totals do not shrink as deliveries happen.
+      combination: { line: { order: { deliveryDate: fromDateString(date), status: { in: ["CONFIRMED", "DELIVERED"] } } } },
       stationId: query.stationId === "none" ? null : query.stationId ? Number(query.stationId) : undefined,
     };
     // One query with its relations loaded together (no query per unit), so a 400-order day stays quick.
@@ -50,13 +51,13 @@ export class KitchenService {
     const toRow = (u: (typeof units)[number]) => {
       const { line } = u.combination;
       const { order } = line;
-      const options = u.combination.optionsSnapshot as { optionName: string }[];
+      const options = u.combination.optionsSnapshot as { optionName: string; portion?: string | null }[];
       return {
         unitId: u.id,
         orderId: order.id,
         companyName: order.company.name,
         dishName: line.dishNameSnapshot,
-        optionsSummary: options.map((o) => o.optionName).join(", "),
+        optionsSummary: options.map((o) => (o.portion ? `${o.optionName} (${o.portion})` : o.optionName)).join(", "),
         quantity: u.combination.quantity,
         status: u.status,
         startedAt: u.startedAt,

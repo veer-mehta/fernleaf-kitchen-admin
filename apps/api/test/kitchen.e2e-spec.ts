@@ -132,6 +132,16 @@ describe("kitchen board and prep units (e2e)", () => {
       expect((await kitchen.get("/kitchen/board?date=2026-10-14")).body.stations).toEqual([]); // placed, not yet confirmed
     });
 
+    it("a delivered order's finished units stay on the board as done (the day's done count must not shrink after delivery)", async () => {
+      const { admin, kitchen, orderId, units } = await confirmed();
+      await admin.post(`/orders/${orderId}/force-complete`).expect(201);
+      await prisma.order.update({ where: { id: orderId }, data: { status: "DELIVERED" } });
+      const res = await kitchen.get(`/kitchen/board?date=${DELIVERY_DATE}`);
+      expect(res.body.totals).toMatchObject({ pending: 0, started: 0, done: 2, late: 0, atRisk: 0 });
+      // ... but nobody can start or finish units of an order that has already left
+      expect((await kitchen.post(`/kitchen/units/${units[0]}/start`)).body.code).toBe("ORDER_NOT_CONFIRMED");
+    });
+
     it("defaults to today in the kitchen zone, whatever the server's zone", async () => {
       const { kitchen } = await confirmed();
       // 22:00 UTC on Tue 6 Oct is already Wed 7 Oct 03:30 in Kolkata.
