@@ -45,3 +45,7 @@ export const apiPost = <T>(path: string, body?: unknown) => request<T>("POST", p
 export const apiPatch = <T>(path: string, body: unknown) => request<T>("PATCH", path, body);
 export const apiPut = <T>(path: string, body: unknown) => request<T>("PUT", path, body);
 export const apiDelete = <T>(path: string) => request<T>("DELETE", path);
+
+// Helpers for forms: a readable message and the per-field messages from the server.
+export const errorMessage = (e: unknown) => (e instanceof Error ? e.message : "Something went wrong");
+export const fieldErrors = (e: unknown) => (e instanceof ApiRequestError ? e.fields : undefined);
