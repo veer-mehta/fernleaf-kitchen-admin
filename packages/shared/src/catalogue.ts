@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { imageRef } from "./images";
 import { PageQuery } from "./pagination";
 
 const id = z.number().int().positive();
@@ -8,7 +9,7 @@ export const DishInput = z.object({
   sku: z.string().trim().min(1, "SKU is required").max(40),
   name: z.string().trim().min(1, "Name is required").max(120),
   description: z.string().trim().max(1000).default(""),
-  imageUrl: z.string().trim().url("Enter a valid URL").nullable().optional(),
+  imageUrl: imageRef.nullable().optional(),
   temperature: z.enum(["HOT", "COLD"]),
   costCents: cents,
   stationId: id.nullable().optional(),
@@ -35,10 +36,12 @@ export const OptionInput = z.object({
   costCents: cents,
   allergenIds: z.array(id).default([]),
   dietaryTagIds: z.array(id).default([]),
+  portionSizeIds: z.array(id).default([]), // [Should] the sizes this option can be served in
 });
 export const UpdateOptionInput = OptionInput.extend({
   allergenIds: z.array(id),
   dietaryTagIds: z.array(id),
+  portionSizeIds: z.array(id),
 })
   .partial()
   .extend({ active: z.boolean().optional() });
@@ -59,7 +62,10 @@ export const GroupsInput = z.object({
         .array(id)
         .min(1, "A group needs at least one option")
         .refine((ids) => new Set(ids).size === ids.length, "An option can only be listed once"),
-      portions: z.array(z.object({ portionSizeId: id, extraCents: cents })).default([]),
+      portions: z
+        .array(z.object({ portionSizeId: id, extraCents: cents }))
+        .refine((p) => new Set(p.map((x) => x.portionSizeId)).size === p.length, "A size can only be listed once")
+        .default([]),
     }),
   ),
 });

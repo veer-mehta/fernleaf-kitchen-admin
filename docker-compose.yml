@@ -6,7 +6,8 @@ services:
       POSTGRES_PASSWORD: kitchen
       POSTGRES_DB: kitchen
     ports:
-      - "127.0.0.1:5433:5432"
+      # 5432 unless POSTGRES_PORT is set in .env (for a machine that already runs its own PostgreSQL)
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       # dev-only credentials; the port is bound to localhost so nothing outside this machine can reach it

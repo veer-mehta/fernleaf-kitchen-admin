@@ -7,12 +7,13 @@ import { PERMISSIONS } from "@fernleaf/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ImageUpload } from "@/components/image-upload";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/native-select";
 import { apiGet, apiPatch, apiPost, errorMessage } from "@/lib/api";
 import { useMe } from "@/lib/auth";
 import { formatDate, formatTime } from "@/lib/format";
-import { safeHref } from "@/lib/safe-url";
+import { imageSrc } from "@/lib/safe-url";
 import type { DispatchBoard, DispatchDrop, DropStep } from "@/lib/types";
 
 const STATUS_LABEL = { OPEN: "Waiting for kitchen", DISPATCH_READY: "Ready for dispatch", OUT_FOR_DELIVERY: "Out for delivery", DELIVERED: "Delivered" } as const;
@@ -64,7 +65,7 @@ function DropCard({ drop, drivers, canUpdate }: { drop: DispatchDrop; drivers: {
         {drop.nextAction === "delivered" && canUpdate && (
           <div className="flex flex-wrap gap-2">
             <Input className="max-w-xs" placeholder="Delivery note (optional)" aria-label="Delivery note" value={note} onChange={(e) => setNote(e.target.value)} />
-            <Input className="max-w-xs" placeholder="Photo link (optional)" aria-label="Photo link" value={photoUrl} onChange={(e) => setPhotoUrl(e.target.value)} />
+            <ImageUpload label="Delivery photo (optional)" value={photoUrl} onChange={setPhotoUrl} />
           </div>
         )}
         {canUpdate && drop.nextAction && (
@@ -74,12 +75,11 @@ function DropCard({ drop, drivers, canUpdate }: { drop: DispatchDrop; drivers: {
           </div>
         )}
         {!drop.nextAction && drop.blocker && <p className="text-sm text-muted-foreground">{drop.blocker}</p>}
-        {drop.status === "OPEN" && drop.blocker && canUpdate && <p className="text-sm text-muted-foreground">{drop.blocker}</p>}
         {drop.status === "DELIVERED" && (
           <p className="text-sm text-muted-foreground">
             Delivered {drop.deliveredAt ? formatTime(drop.deliveredAt) : ""}
             {drop.note && <> · “{drop.note}”</>}
-            {safeHref(drop.photoUrl) && <> · <a className="underline" href={safeHref(drop.photoUrl)} target="_blank" rel="noreferrer noopener">photo</a></>}
+            {imageSrc(drop.photoUrl) && <> · <a className="underline" href={imageSrc(drop.photoUrl)} target="_blank" rel="noreferrer noopener">photo</a></>}
           </p>
         )}
       </CardContent>
@@ -99,7 +99,7 @@ export default function DispatchPage() {
   const { data: drivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: () => apiGet<{ id: number; name: string }[]>("/drivers") });
 
   return (
-    <div className="max-w-4xl space-y-4">
+    <div className="space-y-4">
       <h1 className="text-xl font-semibold">Dispatch board</h1>
       <div className="flex flex-wrap items-end gap-3">
         <label className="space-y-1 text-sm"><span className="block text-xs text-muted-foreground">Delivery date</span>

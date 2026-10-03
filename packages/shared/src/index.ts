@@ -15,3 +15,4 @@ export * from "./kitchen";
 export * from "./dispatch";
 export * from "./billing";
 export * from "./dashboard";
+export * from "./images";

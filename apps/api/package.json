@@ -15,7 +15,9 @@
     "db:deploy": "dotenv run -q -f ../../.env -- prisma migrate deploy",
     "db:test": "dotenv run -q -f ../../.env -- sh -c 'DATABASE_URL=$TEST_DATABASE_URL prisma migrate deploy'",
     "db:seed": "dotenv run -q -f ../../.env -- prisma db seed",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "migrate:deploy": "prisma migrate deploy",
+    "seed": "prisma db seed"
   },
   "dependencies": {
     "@fernleaf/shared": "workspace:*",
@@ -27,7 +29,10 @@
     "@prisma/client": "^6.19.3",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
+    "csv-parse": "^7.0.3",
     "dotenv": "^18.0.5",
+    "express": "^5.2.1",
+    "helmet": "^8.3.0",
     "luxon": "^3.7.2",
     "nestjs-zod": "^5.5.0",
     "reflect-metadata": "^0.2.2",

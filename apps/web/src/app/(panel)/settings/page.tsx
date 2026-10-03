@@ -105,6 +105,29 @@ function Holidays({ canEdit }: { canEdit: boolean }) {
   );
 }
 
+// The demo orders are generated around "today", so after a night or a long gap they can be stale.
+// This button rebuilds them around today. Orders created by hand are never touched.
+function DemoData() {
+  const queryClient = useQueryClient();
+  const refresh = useMutation({
+    mutationFn: () => apiPost<{ today: string; orders: number; drops: number }>("/demo/refresh"),
+    onSuccess: (r) => {
+      toast.success(`Demo data rebuilt around ${r.today}: ${r.orders} orders in ${r.drops} drops`);
+      queryClient.invalidateQueries(); // every screen may now show different data
+    },
+    onError: (e) => toast.error(errorMessage(e)),
+  });
+  return (
+    <Card>
+      <CardHeader><CardTitle className="text-base">Demo data</CardTitle></CardHeader>
+      <CardContent className="space-y-2">
+        <p className="text-xs text-muted-foreground">The sample orders, drops and invoices are generated around today’s date (six days back, a week ahead), so there is always something on the boards. This rebuilds them. It runs by itself at start-up on a new day. Orders you created yourself, and demo orders that are on a real invoice, are kept.</p>
+        <Button variant="outline" disabled={refresh.isPending} onClick={() => refresh.mutate()}>{refresh.isPending ? "Rebuilding…" : "Refresh demo data"}</Button>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function SettingsPage() {
   const { can } = useMe();
   const canEdit = can(PERMISSIONS.SETTINGS_WRITE);
@@ -114,6 +137,7 @@ export default function SettingsPage() {
       <h1 className="text-xl font-semibold">Settings</h1>
       {settings ? <SettingsForm key={JSON.stringify(settings)} settings={settings} canEdit={canEdit} /> : <p className="text-muted-foreground">Loading…</p>}
       <Holidays canEdit={canEdit} />
+      {canEdit && <DemoData />}
     </div>
   );
 }

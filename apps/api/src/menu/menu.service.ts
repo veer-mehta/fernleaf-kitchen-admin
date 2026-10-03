@@ -16,6 +16,7 @@ export interface MenuGroup {
   required: boolean;
   displayOrder: number;
   usesPortions: boolean;
+  portions: { portionSizeId: number; name: string; extraCents: number }[]; // empty when the group is not sold in sizes
   options: MenuOption[];
 }
 export interface MenuDish {
@@ -49,12 +50,14 @@ const dishInclude = (tierId: number) =>
     groups: {
       orderBy: byOrder,
       include: {
+        portions: { include: { portionSize: true } },
         items: {
           orderBy: { displayOrder: "asc" },
           include: {
             option: {
               include: {
                 prices: { where: { tierId } },
+                portions: true,
                 allergens: { include: { allergen: true } },
                 dietaryTags: { include: { dietaryTag: true } },
               },
@@ -159,9 +162,17 @@ export class MenuService {
 
     const groups: MenuGroup[] = [];
     for (const group of dish.groups) {
+      // Sizes, cheapest first (Regular before Large).
+      const portions = group.usesPortions
+        ? [...group.portions]
+            .sort((a, b) => a.extraCents - b.extraCents || a.portionSizeId - b.portionSizeId)
+            .map((p) => ({ portionSizeId: p.portionSizeId, name: p.portionSize.name, extraCents: p.extraCents }))
+        : [];
       const options: MenuOption[] = group.items
         .map((item) => item.option)
         .filter((option) => option.active && option.prices.length > 0)
+        // In a group sold in sizes, an option must be able to be served in every size (and the group must list sizes).
+        .filter((option) => !group.usesPortions || (portions.length > 0 && portions.every((s) => option.portions.some((op) => op.portionSizeId === s.portionSizeId))))
         .map((option) => ({
           optionId: option.id,
           name: option.name,
@@ -180,6 +191,7 @@ export class MenuService {
         required: group.required,
         displayOrder: group.displayOrder,
         usesPortions: group.usesPortions,
+        portions,
         options,
       });
     }

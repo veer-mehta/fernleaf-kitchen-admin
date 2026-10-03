@@ -29,7 +29,7 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
   if (!order) return <p className="text-muted-foreground">Loading…</p>;
 
   return (
-    <div className="max-w-4xl space-y-4">
+    <div className="space-y-4">
       <Link className="text-sm underline" href="/orders">← All orders</Link>
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-xl font-semibold">Order #{order.id}</h1>
@@ -66,7 +66,7 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
                 line.combinations.map((c, i) => (
                   <TableRow key={c.id}>
                     <TableCell>{i === 0 ? <><b>{line.dishName}</b><br /><span className="text-xs text-muted-foreground">{line.sku}{line.station ? ` · ${line.station}` : ""}</span></> : ""}</TableCell>
-                    <TableCell className="text-sm">{c.options.length ? c.options.map((o) => `${o.optionName}${o.priceCents ? ` (+${formatCents(o.priceCents)})` : ""}`).join(", ") : "–"}</TableCell>
+                    <TableCell className="text-sm">{c.options.length ? c.options.map((o) => `${o.optionName}${o.portion ? ` (${o.portion})` : ""}${o.priceCents ? ` +${formatCents(o.priceCents)}` : ""}`).join(", ") : "–"}</TableCell>
                     <TableCell className="text-right">{c.quantity}</TableCell>
                     <TableCell className="text-right">{formatCents(c.unitPriceCents)}</TableCell>
                     <TableCell className="text-right">{formatCents(c.lineTotalCents)}</TableCell>

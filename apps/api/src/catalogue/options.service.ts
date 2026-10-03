@@ -10,6 +10,7 @@ import { assertReferencesExist, toJoinRows } from "./references";
 const include = {
   allergens: { include: { allergen: true } },
   dietaryTags: { include: { dietaryTag: true } },
+  portions: { include: { portionSize: true } },
 } satisfies Prisma.OptionInclude;
 
 function toOption(o: Prisma.OptionGetPayload<{ include: typeof include }>) {
@@ -20,6 +21,7 @@ function toOption(o: Prisma.OptionGetPayload<{ include: typeof include }>) {
     active: o.active,
     allergens: o.allergens.map((a) => ({ id: a.allergen.id, name: a.allergen.name })),
     dietaryTags: o.dietaryTags.map((t) => ({ id: t.dietaryTag.id, name: t.dietaryTag.name })),
+    portionSizes: o.portions.map((p) => ({ id: p.portionSize.id, name: p.portionSize.name })),
   };
 }
 
@@ -29,6 +31,7 @@ interface OptionFields {
   active?: boolean;
   allergenIds?: number[];
   dietaryTagIds?: number[];
+  portionSizeIds?: number[];
 }
 
 @Injectable()
@@ -64,6 +67,7 @@ export class OptionsService {
         costCents: input.costCents,
         allergens: { create: toJoinRows("allergenId", input.allergenIds ?? []) },
         dietaryTags: { create: toJoinRows("dietaryTagId", input.dietaryTagIds ?? []) },
+        portions: { create: toJoinRows("portionSizeId", input.portionSizeIds ?? []) },
       },
       include,
     });
@@ -85,6 +89,9 @@ export class OptionsService {
             : undefined,
           dietaryTags: input.dietaryTagIds
             ? { deleteMany: {}, create: toJoinRows("dietaryTagId", input.dietaryTagIds) }
+            : undefined,
+          portions: input.portionSizeIds
+            ? { deleteMany: {}, create: toJoinRows("portionSizeId", input.portionSizeIds) }
             : undefined,
         },
         include,

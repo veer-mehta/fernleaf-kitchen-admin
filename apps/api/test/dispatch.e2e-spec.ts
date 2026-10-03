@@ -330,6 +330,16 @@ describe("dispatch board, drops and the driver view (e2e)", () => {
       expect((await driver.post(`/driver/drops/${dropIds[0]}/delivered`).send({})).status).toBe(404);
     });
 
+    it("accepts the path of an uploaded photo as the delivery photo", async () => {
+      const { dispatch, driver, dropIds } = await setup({ kitchenReady: true, driver: true });
+      clock.set(NOON);
+      await dispatch.post(`/drops/${dropIds[0]}/dispatch-ready`);
+      await dispatch.post(`/drops/${dropIds[0]}/out-for-delivery`);
+      const res = await driver.post(`/driver/drops/${dropIds[0]}/delivered`).send({ photoUrl: "/images/7" });
+      expect(res.status).toBe(201);
+      expect(await drop(dropIds[0])).toMatchObject({ status: "DELIVERED", photoUrl: "/images/7" });
+    });
+
     it("rejects an unsafe photo link and an over-long note", async () => {
       const { dispatch, driver, dropIds } = await setup({ kitchenReady: true, driver: true });
       clock.set(NOON);
@@ -338,6 +348,9 @@ describe("dispatch board, drops and the driver view (e2e)", () => {
       const bad = await driver.post(`/driver/drops/${dropIds[0]}/delivered`).send({ photoUrl: "javascript:alert(1)" });
       expect(bad.status).toBe(400);
       expect(bad.body.fields.photoUrl).toBeDefined();
+      const fakePath = await driver.post(`/driver/drops/${dropIds[0]}/delivered`).send({ photoUrl: "/images/abc" });
+      expect(fakePath.status).toBe(400);
+      expect(fakePath.body.fields.photoUrl).toBeDefined();
       expect((await driver.post(`/driver/drops/${dropIds[0]}/delivered`).send({ note: "x".repeat(501) })).status).toBe(400);
       expect((await drop(dropIds[0])).status).toBe("OUT_FOR_DELIVERY");
     });

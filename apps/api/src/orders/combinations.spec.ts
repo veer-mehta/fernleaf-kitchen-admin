@@ -141,3 +141,33 @@ describe("countPrepUnits (combination counting)", () => {
     expect(countPrepUnits([])).toBe(0);
   });
 });
+
+describe("validateLine with portion sizes", () => {
+  // A "Protein" group sold in two sizes (ids 1 = Regular, 2 = Large), and a "Side" group with no sizes.
+  const protein: GroupRule = { groupId: 1, name: "Protein", required: true, optionIds: [10, 11], portionSizeIds: [1, 2] };
+  const side: GroupRule = { groupId: 2, name: "Side", required: false, optionIds: [20] };
+  const pg = [protein, side];
+
+  it("a portioned group needs a size, and the size must be one the group sells", () => {
+    const ok: CombinationInput = { quantity: 2, selections: [{ groupId: 1, optionId: 10, portionSizeId: 2 }] };
+    expect(errorsOf(() => validateLine(2, null, [ok], pg))).toBeNull();
+
+    const missing: CombinationInput = { quantity: 2, selections: [{ groupId: 1, optionId: 10 }] };
+    expect(errorsOf(() => validateLine(2, null, [missing], pg))?.["combinations.0.selections"]).toMatch(/size/i);
+
+    const wrongSize: CombinationInput = { quantity: 2, selections: [{ groupId: 1, optionId: 10, portionSizeId: 9 }] };
+    expect(errorsOf(() => validateLine(2, null, [wrongSize], pg))?.["combinations.0.selections"]).toMatch(/size/i);
+  });
+
+  it("a group with no sizes refuses a size", () => {
+    const sized: CombinationInput = { quantity: 2, selections: [{ groupId: 1, optionId: 10, portionSizeId: 1 }, { groupId: 2, optionId: 20, portionSizeId: 1 }] };
+    expect(errorsOf(() => validateLine(2, null, [sized], pg))?.["combinations.0.selections"]).toMatch(/no sizes|not sold in sizes/i);
+  });
+
+  it("the same option in a different size is a different combination (not a duplicate)", () => {
+    const regular: CombinationInput = { quantity: 3, selections: [{ groupId: 1, optionId: 10, portionSizeId: 1 }] };
+    const large: CombinationInput = { quantity: 2, selections: [{ groupId: 1, optionId: 10, portionSizeId: 2 }] };
+    expect(errorsOf(() => validateLine(5, null, [regular, large], pg))).toBeNull();
+    expect(errorsOf(() => validateLine(5, null, [regular, { ...large, selections: regular.selections }], pg))?.["combinations.1.selections"]).toMatch(/same choices/i);
+  });
+});

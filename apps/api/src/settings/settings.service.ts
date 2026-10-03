@@ -1,10 +1,11 @@
 import { Injectable } from "@nestjs/common";
-import { DEFAULT_SETTINGS, KitchenSettings, kitchenToday } from "@fernleaf/shared";
+import { KitchenSettings, kitchenToday } from "@fernleaf/shared";
 import { Clock } from "../common/clock";
 import { fromDateString, toDateString } from "../common/dates";
 import { DomainError } from "../common/domain-error";
 import { isRecordNotFound, isUniqueViolation } from "../common/prisma-errors";
 import { PrismaService } from "../prisma/prisma.service";
+import { loadKitchenSettings } from "./load-settings";
 
 type SettingsChange = Partial<Omit<KitchenSettings, "holidays">>;
 
@@ -16,13 +17,8 @@ export class SettingsService {
   ) {}
 
   // Saved values override the defaults in code; holidays come from their own table.
-  async getKitchenSettings(): Promise<KitchenSettings> {
-    const [rows, holidays] = await Promise.all([
-      this.prisma.setting.findMany(),
-      this.prisma.kitchenHoliday.findMany({ orderBy: { date: "asc" } }),
-    ]);
-    const saved = Object.fromEntries(rows.map((r) => [r.key, r.value]));
-    return { ...DEFAULT_SETTINGS, ...saved, holidays: holidays.map((h) => toDateString(h.date)) };
+  getKitchenSettings(): Promise<KitchenSettings> {
+    return loadKitchenSettings(this.prisma);
   }
 
   async update(change: SettingsChange): Promise<KitchenSettings> {

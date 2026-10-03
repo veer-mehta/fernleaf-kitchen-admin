@@ -1,0 +1,30 @@
+# Render "blueprint" for the API. Create it with: New + > Blueprint > pick this repository.
+# The web app is deployed separately on Vercel (see the README, "Deploying").
+services:
+  - type: web
+    name: fernleaf-api
+    runtime: node
+    plan: free
+    region: singapore
+    # The build also migrates and seeds the database, so every deploy leaves the four test
+    # accounts and fresh demo data in place (both steps are safe to repeat).
+    buildCommand: >-
+      npm install -g pnpm@12 &&
+      pnpm install --frozen-lockfile --prod=false &&
+      pnpm --filter @fernleaf/shared build &&
+      pnpm --filter api build &&
+      pnpm --filter api migrate:deploy &&
+      pnpm --filter api seed
+    startCommand: node apps/api/dist/main.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL # the Neon connection string
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: WEB_ORIGIN # the Vercel address of the web app
+        sync: false

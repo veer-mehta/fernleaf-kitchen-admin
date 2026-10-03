@@ -23,7 +23,7 @@ export default function CompanyPage({ params }: { params: Promise<{ id: string }
   if (!company) return <p className="text-muted-foreground">Loading…</p>;
 
   return (
-    <div className="max-w-4xl space-y-4">
+    <div className="space-y-4">
       <Link className="text-sm underline" href="/companies">← All companies</Link>
       <h1 className="text-xl font-semibold">{company.name}</h1>
       <DetailsForm key={`d-${company.id}-${company.name}`} company={company} canEdit={canEdit} />

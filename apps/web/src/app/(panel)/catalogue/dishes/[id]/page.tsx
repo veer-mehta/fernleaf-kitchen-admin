@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { CentsInput } from "@/components/cents-input";
 import { CheckList } from "@/components/check-list";
+import { ImageUpload } from "@/components/image-upload";
 import { FormField } from "@/components/form-field";
 import { NativeSelect } from "@/components/native-select";
 import { useReference } from "@/hooks/use-reference";
@@ -86,7 +87,7 @@ function DishForm({ dish }: { dish: DishDetail | null }) {
             <label className="text-sm font-medium" htmlFor="description">Description</label>
             <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
           </div>
-          <FormField name="imageUrl" label="Image URL" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} errors={errors} />
+          <ImageUpload label="Picture" value={imageUrl} onChange={setImageUrl} error={errors?.imageUrl} />
           <div className="grid gap-3 md:grid-cols-4">
             <div className="space-y-1.5">
               <label className="text-sm font-medium" htmlFor="temperature">Temperature</label>
@@ -143,7 +144,7 @@ export default function DishPage({ params }: { params: Promise<{ id: string }> }
   if (!isNew && !dish) return <p className="text-muted-foreground">Loading…</p>;
 
   return (
-    <div className="max-w-4xl space-y-4">
+    <div className="space-y-4">
       <Link className="text-sm underline" href="/catalogue/dishes">← All dishes</Link>
       {/* key remounts the form when a different dish loads, so its fields restart from that dish */}
       <DishForm key={dish?.id ?? "new"} dish={dish ?? null} />

@@ -16,7 +16,7 @@ const detailInclude = {
     orderBy: { displayOrder: "asc" },
     include: {
       items: { orderBy: { displayOrder: "asc" }, include: { option: true } },
-      portions: true,
+      portions: { include: { portionSize: true }, orderBy: [{ extraCents: "asc" }, { portionSizeId: "asc" }] },
     },
   },
 } satisfies Prisma.DishInclude;
@@ -51,7 +51,7 @@ function toDetail(d: DishWithDetail) {
         costCents: i.option.costCents,
         active: i.option.active,
       })),
-      portions: g.portions.map((p) => ({ portionSizeId: p.portionSizeId, extraCents: p.extraCents })),
+      portions: g.portions.map((p) => ({ portionSizeId: p.portionSizeId, name: p.portionSize.name, extraCents: p.extraCents })),
     })),
   };
 }

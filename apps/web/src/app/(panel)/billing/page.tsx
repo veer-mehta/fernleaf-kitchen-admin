@@ -133,7 +133,7 @@ export default function BillingPage() {
   const { data: invoices } = useQuery({ queryKey: ["invoices", params.toString()], queryFn: () => apiGet<Paged<InvoiceListItem>>(`/invoices?${params}`) });
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="space-y-6">
       <h1 className="text-xl font-semibold">Billing</h1>
       <section className="space-y-3">
         <h2 className="font-medium">Waiting to be invoiced</h2>
