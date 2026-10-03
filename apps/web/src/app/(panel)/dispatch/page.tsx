@@ -74,7 +74,6 @@ function DropCard({ drop, drivers, canUpdate }: { drop: DispatchDrop; drivers: {
           </div>
         )}
         {!drop.nextAction && drop.blocker && <p className="text-sm text-muted-foreground">{drop.blocker}</p>}
-        {drop.status === "OPEN" && drop.blocker && canUpdate && <p className="text-sm text-muted-foreground">{drop.blocker}</p>}
         {drop.status === "DELIVERED" && (
           <p className="text-sm text-muted-foreground">
             Delivered {drop.deliveredAt ? formatTime(drop.deliveredAt) : ""}

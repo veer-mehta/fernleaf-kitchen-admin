@@ -9,6 +9,7 @@ import { CompaniesModule } from "./companies/companies.module";
 import { ClockModule } from "./common/clock";
 import { HttpExceptionFilter } from "./common/http-exception.filter";
 import { DashboardModule } from "./dashboard/dashboard.module";
+import { DemoModule } from "./demo/demo.module";
 import { DispatchModule } from "./dispatch/dispatch.module";
 import { DriverModule } from "./driver/driver.module";
 import { EmployeesModule } from "./employees/employees.module";
@@ -23,7 +24,7 @@ import { SettingsModule } from "./settings/settings.module";
 import { StaffModule } from "./staff/staff.module";
 
 @Module({
-  imports: [PrismaModule, ClockModule, AuthModule, StaffModule, ReferenceModule, CatalogueModule, PricingModule, MenuModule, SettingsModule, CompaniesModule, EmployeesModule, OrdersModule, KitchenModule, DispatchModule, DriverModule, BillingModule, DashboardModule],
+  imports: [PrismaModule, ClockModule, AuthModule, StaffModule, ReferenceModule, CatalogueModule, PricingModule, MenuModule, SettingsModule, CompaniesModule, EmployeesModule, OrdersModule, KitchenModule, DispatchModule, DriverModule, BillingModule, DashboardModule, DemoModule],
   controllers: [HealthController],
   providers: [
     // Registered as providers (not in main.ts) so e2e tests get them too.
