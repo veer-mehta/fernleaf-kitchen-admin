@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    # A real Postgres, because the tests exercise database behaviour (locks, unique indexes, transactions).
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: kitchen
+          POSTGRES_PASSWORD: kitchen
+          POSTGRES_DB: kitchen
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U kitchen"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://kitchen:kitchen@localhost:5432/kitchen
+      TEST_DATABASE_URL: postgresql://kitchen:kitchen@localhost:5432/kitchen_test
+      JWT_SECRET: ci-only-secret
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Create and migrate the test database
+        run: |
+          PGPASSWORD=kitchen psql -h localhost -U kitchen -d kitchen -c 'CREATE DATABASE kitchen_test'
+          cp .env.example .env   # the scripts read it; the values set above take priority
+          pnpm --filter api db:test
+
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
