@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import * as bcrypt from "bcryptjs";
+import { PERMISSIONS } from "@fernleaf/shared";
 import { DomainError } from "../common/domain-error";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -18,6 +19,15 @@ export class StaffService {
 
   list() {
     return this.prisma.staff.findMany({ select: publicFields, orderBy: { name: "asc" }, take: 200 });
+  }
+
+  // Active staff whose role holds the driver permission (for choosing default drivers and assigning drops).
+  listDrivers() {
+    return this.prisma.staff.findMany({
+      where: { active: true, role: { permissions: { some: { permission: { code: PERMISSIONS.DRIVER_OWN_DROPS } } } } },
+      select: { id: true, name: true, email: true },
+      orderBy: { name: "asc" },
+    });
   }
 
   listRoles() {
