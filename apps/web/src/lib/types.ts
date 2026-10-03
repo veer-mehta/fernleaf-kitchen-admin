@@ -165,3 +165,32 @@ export interface OrderDetail {
   timeline: { type: string; actor: string; at: string; meta: Record<string, unknown> | null }[];
   warnings?: string[];
 }
+
+// ---------- kitchen, dispatch and driver ----------
+export type Urgency = "late" | "at_risk" | "ok";
+export type UnitStatus = "PENDING" | "STARTED" | "DONE";
+export interface KitchenUnit {
+  unitId: number; orderId: number; companyName: string; dishName: string; optionsSummary: string; quantity: number;
+  status: UnitStatus; startedAt: string | null; doneAt: string | null; deliveryTime: string; plannedKitchenReadyAt: string; urgency: Urgency;
+}
+export interface KitchenBoard {
+  date: string;
+  stations: { stationId: number | null; name: string; units: KitchenUnit[]; counts: { pending: number; started: number; done: number } }[];
+  totals: { pending: number; started: number; done: number; late: number; atRisk: number };
+}
+export type DropStatus = "OPEN" | "DISPATCH_READY" | "OUT_FOR_DELIVERY" | "DELIVERED";
+export type DropStep = "dispatch-ready" | "out-for-delivery" | "delivered";
+export interface DispatchDrop {
+  id: number; deliveryTime: string; status: DropStatus; company: Named; address: { id: number; label: string; line1: string; city: string };
+  driver: Named | null; late: boolean; nextAction: DropStep | null; blocker: string | null; note: string | null; photoUrl: string | null; deliveredAt: string | null;
+  orders: { id: number; employeeName: string; itemCount: number; stage: string; plannedDispatchReadyAt: string }[];
+}
+export interface DispatchBoard {
+  date: string; drops: DispatchDrop[];
+  totals: { open: number; dispatchReady: number; outForDelivery: number; delivered: number; unassigned: number; late: number };
+}
+export interface DriverDrop {
+  id: number; deliveryTime: string; status: DropStatus; company: Named; instructions: string;
+  address: { label: string; line1: string; line2: string; city: string; postalCode: string; instructions: string };
+  orders: { id: number; employeeName: string; itemCount: number }[]; note: string | null; photoUrl: string | null; deliveredAt: string | null;
+}
