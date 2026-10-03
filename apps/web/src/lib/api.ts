@@ -49,3 +49,6 @@ export const apiDelete = <T>(path: string) => request<T>("DELETE", path);
 // Helpers for forms: a readable message and the per-field messages from the server.
 export const errorMessage = (e: unknown) => (e instanceof Error ? e.message : "Something went wrong");
 export const fieldErrors = (e: unknown) => (e instanceof ApiRequestError ? e.fields : undefined);
+
+// Collects every field message into a flat list, for showing all problems with an order at once.
+export const allFieldMessages = (e: unknown): string[] => Object.values(fieldErrors(e) ?? {});

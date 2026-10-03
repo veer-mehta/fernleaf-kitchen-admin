@@ -1,0 +1,68 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
+import { PERMISSIONS } from "@fernleaf/shared";
+import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { NativeSelect } from "@/components/native-select";
+import { Pagination } from "@/components/pagination";
+import { apiGet } from "@/lib/api";
+import { useMe } from "@/lib/auth";
+import type { CompanyListItem, EmployeeRow, Paged } from "@/lib/types";
+
+const PAGE_SIZE = 10;
+
+export default function EmployeesPage() {
+  const { can } = useMe();
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [companyId, setCompanyId] = useState("");
+  const { data: companies } = useQuery({ queryKey: ["companies", "all"], queryFn: () => apiGet<Paged<CompanyListItem>>("/companies?pageSize=100") });
+
+  const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE) });
+  if (search) params.set("search", search);
+  if (companyId) params.set("companyId", companyId);
+  const { data } = useQuery({ queryKey: ["employees", params.toString()], queryFn: () => apiGet<Paged<EmployeeRow>>(`/employees?${params}`) });
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-2">
+        <h1 className="text-xl font-semibold">Employees</h1>
+        {can(PERMISSIONS.EMPLOYEES_WRITE) && <Link href="/employees/new" className={buttonVariants()}>New employee</Link>}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <input
+          className="h-9 w-56 rounded-md border border-input bg-background px-3 text-sm"
+          placeholder="Search name or email"
+          value={search}
+          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+        />
+        <NativeSelect value={companyId} onChange={(e) => { setCompanyId(e.target.value); setPage(1); }}>
+          <option value="">All companies</option>
+          {companies?.items.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </NativeSelect>
+      </div>
+      <Table>
+        <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Company</TableHead><TableHead>Can change</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+        <TableBody>
+          {data?.items.map((e) => (
+            <TableRow key={e.id}>
+              <TableCell><Link className="underline" href={`/employees/${e.id}`}>{e.name}</Link></TableCell>
+              <TableCell>{e.email}</TableCell>
+              <TableCell>{e.company.name}</TableCell>
+              <TableCell className="text-xs text-muted-foreground">
+                {[e.canChooseAddress && "address", e.canChangeTime && "time", e.canChangePackaging && "packaging"].filter(Boolean).join(", ") || "nothing"}
+              </TableCell>
+              <TableCell><Badge variant={e.active ? "secondary" : "outline"}>{e.active ? "Active" : "Inactive"}</Badge></TableCell>
+            </TableRow>
+          ))}
+          {data?.items.length === 0 && <TableRow><TableCell colSpan={5} className="text-muted-foreground">No employees found.</TableCell></TableRow>}
+        </TableBody>
+      </Table>
+      <Pagination page={page} pageSize={PAGE_SIZE} total={data?.total ?? 0} onPage={setPage} />
+    </div>
+  );
+}

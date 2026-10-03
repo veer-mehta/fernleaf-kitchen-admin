@@ -14,5 +14,9 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Categories", href: "/catalogue/categories", permission: PERMISSIONS.CATALOGUE_READ },
   { label: "Lists", href: "/catalogue/reference", permission: PERMISSIONS.CATALOGUE_READ },
   { label: "Pricing", href: "/pricing", permission: PERMISSIONS.PRICING_READ },
+  { label: "Orders", href: "/orders", permission: PERMISSIONS.ORDERS_READ },
+  { label: "Companies", href: "/companies", permission: PERMISSIONS.COMPANIES_READ },
+  { label: "Employees", href: "/employees", permission: PERMISSIONS.EMPLOYEES_READ },
+  { label: "Menu preview", href: "/menu-preview", permission: PERMISSIONS.EMPLOYEES_READ },
   { label: "Staff", href: "/staff", permission: PERMISSIONS.STAFF_READ },
 ];
