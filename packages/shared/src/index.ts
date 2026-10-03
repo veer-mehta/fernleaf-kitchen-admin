@@ -13,3 +13,5 @@ export * from "./companies";
 export * from "./orders";
 export * from "./kitchen";
 export * from "./dispatch";
+export * from "./billing";
+export * from "./dashboard";
