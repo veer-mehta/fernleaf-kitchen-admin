@@ -1,6 +1,7 @@
 "use client";
 
 import { PERMISSIONS } from "@fernleaf/shared";
+import { PageHeader } from "@/components/page-header";
 import { AdminDashboardView } from "@/components/dashboards/admin-dashboard";
 import { DispatchDashboardView, DriverDashboardView, KitchenDashboardView } from "@/components/dashboards/role-dashboards";
 import { useMe } from "@/lib/auth";
@@ -13,11 +14,8 @@ export default function HomePage() {
 
   const admin = can(PERMISSIONS.DASHBOARD_ADMIN);
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-semibold">Welcome, {me.name}</h1>
-        <p className="text-sm text-muted-foreground">{me.role} dashboard</p>
-      </div>
+    <div className="space-y-6">
+      <PageHeader title={`Welcome, ${me.name}`} description={`${me.role} dashboard`} />
       {admin && <AdminDashboardView />}
       {!admin && can(PERMISSIONS.KITCHEN_READ) && <KitchenDashboardView />}
       {!admin && can(PERMISSIONS.DISPATCH_READ) && <DispatchDashboardView />}

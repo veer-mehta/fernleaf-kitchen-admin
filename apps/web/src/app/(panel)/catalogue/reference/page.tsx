@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { Check, Pencil, Plus, Trash2, X } from "lucide-react";
+import { IconButton } from "@/components/icon-button";
+import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useReference, type ReferenceKind } from "@/hooks/use-reference";
@@ -45,25 +47,25 @@ function ReferenceList({ kind, title, canEdit }: { kind: ReferenceKind; title: s
   });
 
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader><CardTitle className="text-base">{title}</CardTitle></CardHeader>
-      <CardContent className="space-y-3">
-        <ul className="space-y-1">
+      <CardContent className="flex flex-1 flex-col gap-3">
+        <ul className="flex-1 space-y-1">
           {data.map((item) => (
             <li key={item.id} className="flex items-center gap-2 text-sm">
               {editing?.id === item.id ? (
                 <>
-                  <Input className="h-8" value={editing.name} onChange={(e) => setEditing({ id: item.id, name: e.target.value })} />
-                  <Button size="sm" onClick={() => rename.mutate(editing)}>Save</Button>
-                  <Button size="sm" variant="ghost" onClick={() => setEditing(null)}>Cancel</Button>
+                  <Input value={editing.name} onChange={(e) => setEditing({ id: item.id, name: e.target.value })} />
+                  <IconButton label="Save name" icon={Check} size="icon" variant="default" onClick={() => rename.mutate(editing)} />
+                  <IconButton label="Cancel" icon={X} size="icon" variant="outline" onClick={() => setEditing(null)} />
                 </>
               ) : (
                 <>
                   <span className="flex-1">{item.name}</span>
                   {canEdit && (
                     <>
-                      <Button size="sm" variant="ghost" onClick={() => setEditing(item)}>Rename</Button>
-                      <Button size="sm" variant="ghost" onClick={() => remove.mutate(item.id)}>Delete</Button>
+                      <IconButton label="Rename" icon={Pencil} onClick={() => setEditing(item)} />
+                      <IconButton label="Delete" icon={Trash2} className="text-destructive hover:text-destructive" onClick={() => remove.mutate(item.id)} />
                     </>
                   )}
                 </>
@@ -74,8 +76,8 @@ function ReferenceList({ kind, title, canEdit }: { kind: ReferenceKind; title: s
         </ul>
         {canEdit && (
           <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); add.mutate(); }}>
-            <Input className="h-8" placeholder={`New ${title.toLowerCase()} name`} value={newName} onChange={(e) => setNewName(e.target.value)} />
-            <Button size="sm" type="submit" disabled={!newName.trim()}>Add</Button>
+            <Input placeholder={`New ${title.toLowerCase()} name`} value={newName} onChange={(e) => setNewName(e.target.value)} />
+            <IconButton type="submit" label="Add" icon={Plus} size="icon" variant="default" disabled={!newName.trim()} />
           </form>
         )}
       </CardContent>
@@ -86,9 +88,8 @@ function ReferenceList({ kind, title, canEdit }: { kind: ReferenceKind; title: s
 export default function ReferencePage() {
   const { can } = useMe();
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Reference lists</h1>
-      <p className="text-sm text-muted-foreground">Values used by dishes and options. A value in use cannot be deleted.</p>
+    <div className="space-y-6">
+      <PageHeader title="Reference lists" description={<>Values used by dishes and options. A value in use cannot be deleted.</>} />
       <div className="grid gap-4 md:grid-cols-2">
         {LISTS.map((l) => (
           <ReferenceList key={l.kind} {...l} canEdit={can(PERMISSIONS.CATALOGUE_WRITE)} />

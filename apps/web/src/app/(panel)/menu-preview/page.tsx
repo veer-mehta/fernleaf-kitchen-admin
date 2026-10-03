@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DishCard } from "@/components/dish-card";
@@ -26,9 +27,8 @@ export default function MenuPreviewPage() {
   });
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Menu preview</h1>
-      <p className="text-sm text-muted-foreground">The menu exactly as this employee sees it: their company’s price tier, hidden items removed, dishes without a price left out.</p>
+    <div className="space-y-6">
+      <PageHeader title="Menu preview" description={<>The menu exactly as this employee sees it: their company’s price tier, hidden items removed, dishes without a price left out.</>} />
       <div className="flex flex-wrap gap-2">
         <NativeSelect aria-label="Company" value={companyId} onChange={(e) => { setCompanyId(e.target.value); setEmployeeId(""); }}>
           <option value="">Choose a company…</option>

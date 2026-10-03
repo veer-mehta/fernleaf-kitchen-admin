@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -51,7 +52,8 @@ export function EmployeeImport({ defaultCompanyId }: { defaultCompanyId?: string
               {companies?.items.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </NativeSelect></label>
           <label className="space-y-1 text-sm"><span className="block text-xs text-muted-foreground">CSV file</span>
-            <input
+            <Input
+              className="w-64"
               type="file"
               accept=".csv,text/csv"
               aria-label="CSV file"

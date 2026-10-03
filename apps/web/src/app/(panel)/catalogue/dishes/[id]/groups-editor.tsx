@@ -1,8 +1,11 @@
 "use client";
 
+import { ArrowDown, ArrowUp, X } from "lucide-react";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { IconButton } from "@/components/icon-button";
+import { CheckboxField } from "@/components/checkbox-field";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -74,20 +77,18 @@ export function GroupsEditor({ dish }: { dish: DishDetail }) {
             <div key={i} className="space-y-2 rounded-md border p-3">
               <div className="flex flex-wrap items-center gap-2">
                 <Input className="h-8 max-w-xs" placeholder="Group name" value={group.name} onChange={(e) => update(i, { name: e.target.value })} />
-                <label className="flex items-center gap-1.5 text-sm">
-                  <input type="checkbox" checked={group.required} onChange={(e) => update(i, { required: e.target.checked })} /> Required
-                </label>
-                <Button size="sm" variant="ghost" onClick={() => setGroups(move(groups, i, -1))}>↑</Button>
-                <Button size="sm" variant="ghost" onClick={() => setGroups(move(groups, i, 1))}>↓</Button>
-                <Button size="sm" variant="ghost" onClick={() => setGroups(groups.filter((_, k) => k !== i))}>Remove group</Button>
+                <CheckboxField label="Required" checked={group.required} onCheckedChange={(on) => update(i, { required: on })} />
+                <IconButton label="Move group up" icon={ArrowUp} disabled={i === 0} onClick={() => setGroups(move(groups, i, -1))} />
+                <IconButton label="Move group down" icon={ArrowDown} disabled={i === groups.length - 1} onClick={() => setGroups(move(groups, i, 1))} />
+                <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setGroups(groups.filter((_, k) => k !== i))}>Remove group</Button>
               </div>
               <ol className="list-decimal space-y-1 pl-6 text-sm">
                 {group.optionIds.map((id, j) => (
                   <li key={id}>
                     <span className="mr-2">{nameById.get(id) ?? `Option ${id}`}</span>
-                    <Button size="sm" variant="ghost" onClick={() => update(i, { optionIds: move(group.optionIds, j, -1) })}>↑</Button>
-                    <Button size="sm" variant="ghost" onClick={() => update(i, { optionIds: move(group.optionIds, j, 1) })}>↓</Button>
-                    <Button size="sm" variant="ghost" onClick={() => update(i, { optionIds: group.optionIds.filter((o) => o !== id) })}>✕</Button>
+                    <IconButton label="Move option up" icon={ArrowUp} disabled={j === 0} onClick={() => update(i, { optionIds: move(group.optionIds, j, -1) })} />
+                    <IconButton label="Move option down" icon={ArrowDown} disabled={j === group.optionIds.length - 1} onClick={() => update(i, { optionIds: move(group.optionIds, j, 1) })} />
+                    <IconButton label="Remove option" icon={X} onClick={() => update(i, { optionIds: group.optionIds.filter((o) => o !== id) })} />
                   </li>
                 ))}
               </ol>
@@ -103,9 +104,7 @@ export function GroupsEditor({ dish }: { dish: DishDetail }) {
               {errors?.[`groups.${i}.name`] && <p className="text-sm text-destructive">{errors[`groups.${i}.name`]}</p>}
 
               <div className="space-y-1 border-t pt-2">
-                <label className="flex items-center gap-1.5 text-sm">
-                  <input type="checkbox" checked={group.usesPortions} onChange={(e) => update(i, { usesPortions: e.target.checked, portions: e.target.checked ? group.portions : [] })} /> Sold in sizes
-                </label>
+                <CheckboxField label="Sold in sizes" checked={group.usesPortions} onCheckedChange={(on) => update(i, { usesPortions: on, portions: on ? group.portions : [] })} />
                 {group.usesPortions && (
                   <div className="space-y-1 pl-5">
                     <p className="text-xs text-muted-foreground">Tick each size this group sells and the extra charge on top of the option’s price. Every option above must be able to be served in each ticked size (set that on the Options page).</p>
@@ -113,9 +112,7 @@ export function GroupsEditor({ dish }: { dish: DishDetail }) {
                       const chosen = group.portions.find((p) => p.portionSizeId === size.id);
                       return (
                         <div key={size.id} className="flex items-center gap-2 text-sm">
-                          <label className="flex w-28 items-center gap-1.5">
-                            <input type="checkbox" checked={!!chosen} onChange={(e) => update(i, { portions: e.target.checked ? [...group.portions, { portionSizeId: size.id, extraCents: 0 }] : group.portions.filter((p) => p.portionSizeId !== size.id) })} /> {size.name}
-                          </label>
+                          <CheckboxField className="w-28" label={size.name} checked={!!chosen} onCheckedChange={(on) => update(i, { portions: on ? [...group.portions, { portionSizeId: size.id, extraCents: 0 }] : group.portions.filter((p) => p.portionSizeId !== size.id) })} />
                           {chosen && <>
                             <span className="text-muted-foreground">extra ₹</span>
                             <CentsInput aria-label={`Extra charge for ${size.name} in group ${i + 1}`} className="h-8 w-24" cents={chosen.extraCents} onCommit={(c) => update(i, { portions: group.portions.map((p) => (p.portionSizeId === size.id ? { ...p, extraCents: c ?? 0 } : p)) })} />

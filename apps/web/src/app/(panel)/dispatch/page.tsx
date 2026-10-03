@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { PERMISSIONS } from "@fernleaf/shared";
+import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,14 +42,19 @@ function DropCard({ drop, drivers, canUpdate }: { drop: DispatchDrop; drivers: {
   });
 
   return (
-    <Card className={drop.late ? "border-destructive" : ""}>
-      <CardHeader className="flex-row flex-wrap items-center gap-2">
-        <CardTitle className="text-base">{drop.deliveryTime} · {drop.company.name}</CardTitle>
-        <Badge variant={drop.status === "DELIVERED" ? "default" : "secondary"}>{STATUS_LABEL[drop.status]}</Badge>
-        {drop.late && <Badge variant="destructive">Late</Badge>}
-        <span className="ml-auto text-sm text-muted-foreground">{drop.address.label}: {drop.address.line1}, {drop.address.city}</span>
+    <Card className={`h-full ${drop.late ? "border-destructive" : ""}`}>
+      <CardHeader className="space-y-1.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <CardTitle className="text-base">{drop.deliveryTime} · {drop.company.name}</CardTitle>
+          <Badge variant={drop.status === "DELIVERED" ? "default" : "secondary"}>{STATUS_LABEL[drop.status]}</Badge>
+          {drop.late && <Badge variant="destructive">Late</Badge>}
+        </div>
+        <p className="flex items-start gap-1.5 text-sm text-muted-foreground">
+          <MapPin className="mt-0.5 size-3.5 shrink-0" />
+          <span>{drop.address.label}: {drop.address.line1}, {drop.address.city}</span>
+        </p>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="flex flex-1 flex-col gap-3">
         <ul className="text-sm">
           {drop.orders.map((o) => (
             <li key={o.id}>#{o.id} · {o.employeeName} · {o.itemCount} item(s) · <span className="text-muted-foreground">{STAGE_LABEL[o.stage] ?? o.stage}</span></li>
@@ -63,20 +70,20 @@ function DropCard({ drop, drivers, canUpdate }: { drop: DispatchDrop; drivers: {
           {!drop.driver && drop.status !== "DELIVERED" && <Badge className="bg-amber-500 text-white hover:bg-amber-500">No driver</Badge>}
         </div>
         {drop.nextAction === "delivered" && canUpdate && (
-          <div className="flex flex-wrap gap-2">
-            <Input className="max-w-xs" placeholder="Delivery note (optional)" aria-label="Delivery note" value={note} onChange={(e) => setNote(e.target.value)} />
-            <ImageUpload label="Delivery photo (optional)" value={photoUrl} onChange={setPhotoUrl} />
+          <div className="flex flex-wrap items-start gap-2">
+            <Input className="min-w-40 flex-1" placeholder="Delivery note (optional)" aria-label="Delivery note" value={note} onChange={(e) => setNote(e.target.value)} />
+            <ImageUpload compact label="Delivery photo" value={photoUrl} onChange={setPhotoUrl} />
           </div>
         )}
         {canUpdate && drop.nextAction && (
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="mt-auto flex flex-wrap items-center gap-3">
             <Button disabled={advance.isPending || !!drop.blocker} onClick={() => advance.mutate(drop.nextAction!)}>{STEP_LABEL[drop.nextAction]}</Button>
             {drop.blocker && <span className="text-sm text-muted-foreground">{drop.blocker}</span>}
           </div>
         )}
-        {!drop.nextAction && drop.blocker && <p className="text-sm text-muted-foreground">{drop.blocker}</p>}
+        {!drop.nextAction && drop.blocker && <p className="mt-auto text-sm text-muted-foreground">{drop.blocker}</p>}
         {drop.status === "DELIVERED" && (
-          <p className="text-sm text-muted-foreground">
+          <p className="mt-auto text-sm text-muted-foreground">
             Delivered {drop.deliveredAt ? formatTime(drop.deliveredAt) : ""}
             {drop.note && <> · “{drop.note}”</>}
             {imageSrc(drop.photoUrl) && <> · <a className="underline" href={imageSrc(drop.photoUrl)} target="_blank" rel="noreferrer noopener">photo</a></>}
@@ -99,11 +106,11 @@ export default function DispatchPage() {
   const { data: drivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: () => apiGet<{ id: number; name: string }[]>("/drivers") });
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Dispatch board</h1>
+    <div className="space-y-6">
+      <PageHeader title="Dispatch board" />
       <div className="flex flex-wrap items-end gap-3">
         <label className="space-y-1 text-sm"><span className="block text-xs text-muted-foreground">Delivery date</span>
-          <input type="date" className="h-9 rounded-md border border-input bg-background px-2" value={date} onChange={(e) => setDate(e.target.value)} /></label>
+          <Input type="date" className="w-44" value={date} onChange={(e) => setDate(e.target.value)} /></label>
         {board && <p className="pb-2 text-sm text-muted-foreground">{formatDate(board.date)}</p>}
       </div>
       {error && <p className="text-destructive">{error.message}</p>}
@@ -118,7 +125,9 @@ export default function DispatchPage() {
         </div>
       )}
       {board?.drops.length === 0 && <p className="text-muted-foreground">No deliveries for this date. Orders appear once their cut-off has passed.</p>}
-      {board?.drops.map((d) => <DropCard key={d.id} drop={d} drivers={drivers} canUpdate={can(PERMISSIONS.DISPATCH_UPDATE)} />)}
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {board?.drops.map((d) => <DropCard key={d.id} drop={d} drivers={drivers} canUpdate={can(PERMISSIONS.DISPATCH_UPDATE)} />)}
+      </div>
     </div>
   );
 }

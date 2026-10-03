@@ -4,7 +4,9 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { PERMISSIONS } from "@fernleaf/shared";
+import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -28,19 +30,19 @@ function NewStaff({ roles }: { roles: Named[] }) {
     <Card>
       <CardHeader><CardTitle className="text-base">New staff account</CardTitle></CardHeader>
       <CardContent>
-        <form className="grid gap-3 md:grid-cols-5" onSubmit={(e) => { e.preventDefault(); create.mutate(); }}>
+        <form className="grid items-end gap-3 md:grid-cols-[1fr_1fr_1fr_12rem_auto]" onSubmit={(e) => { e.preventDefault(); create.mutate(); }}>
           <FormField name="name" label="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} errors={errors} />
           <FormField name="email" label="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} errors={errors} />
           <FormField name="password" label="Password (8+ characters)" type="password" autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} errors={errors} />
           <div className="space-y-1.5">
-            <label className="text-sm font-medium" htmlFor="roleId">Role</label>
+            <Label htmlFor="roleId">Role</Label>
             <NativeSelect id="roleId" className="w-full" value={form.roleId} onChange={(e) => setForm({ ...form, roleId: e.target.value })}>
               <option value="">Choose…</option>
               {roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
             </NativeSelect>
             {errors?.roleId && <p className="text-sm text-destructive">{errors.roleId}</p>}
           </div>
-          <Button type="submit" className="self-end" disabled={create.isPending || !form.roleId}>Create</Button>
+          <Button type="submit" disabled={create.isPending || !form.roleId}>Create</Button>
         </form>
       </CardContent>
     </Card>
@@ -72,7 +74,7 @@ function StaffLine({ person, roles, canEdit, isMe }: { person: StaffRow; roles: 
           <>
             <Button size="sm" variant="ghost" disabled={isMe && person.active} onClick={() => update.mutate({ active: !person.active })}>{person.active ? "Deactivate" : "Activate"}</Button>
             <Input className="inline-block h-8 w-36" type="password" placeholder="New password" aria-label={`New password for ${person.name}`} value={password} onChange={(e) => setPassword(e.target.value)} />
-            <Button size="sm" variant="outline" disabled={password.length < 8} onClick={() => update.mutate({ password })}>Reset</Button>
+            <Button variant="outline" disabled={password.length < 8} onClick={() => update.mutate({ password })}>Reset</Button>
           </>
         )}
       </TableCell>
@@ -88,9 +90,8 @@ export default function StaffPage() {
 
   if (error) return <p className="text-destructive">{error.message}</p>;
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Staff</h1>
-      <p className="text-sm text-muted-foreground">Each person has exactly one role. What a role may do is set in the database (roles and permissions), not in code.</p>
+    <div className="space-y-6">
+      <PageHeader title="Staff" description={<>Each person has exactly one role. What a role may do is set in the database (roles and permissions), not in code.</>} />
       {canEdit && <NewStaff roles={roles} />}
       <Table>
         <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Role</TableHead><TableHead>Status</TableHead><TableHead /></TableRow></TableHeader>

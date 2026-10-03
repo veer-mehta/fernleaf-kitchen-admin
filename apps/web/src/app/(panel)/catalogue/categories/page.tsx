@@ -2,11 +2,15 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowDown, ArrowUp, Eye, EyeOff, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { PERMISSIONS } from "@fernleaf/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CheckboxField } from "@/components/checkbox-field";
+import { IconButton } from "@/components/icon-button";
+import { PageHeader } from "@/components/page-header";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/native-select";
 import { apiDelete, apiGet, apiPatch, apiPost, apiPut, errorMessage } from "@/lib/api";
@@ -48,75 +52,85 @@ export default function CategoriesPage() {
   });
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Menu categories</h1>
-      <p className="text-sm text-muted-foreground">
-        Employees see dishes through these categories. A <b>secret</b> category is not listed, but its dishes can still be ordered by staff searching for them.
-      </p>
-      {canEdit && (
-        <form className="flex max-w-sm gap-2" onSubmit={(e) => { e.preventDefault(); create.mutate(); }}>
-          <Input placeholder="New category name" value={newName} onChange={(e) => setNewName(e.target.value)} />
-          <Button type="submit" disabled={!newName.trim()}>Add</Button>
-        </form>
-      )}
-      {categories.map((category, ci) => {
-        const addable = (dishes?.items ?? []).filter((d) => !category.items.some((i) => i.dishId === d.id));
-        return (
-          <Card key={category.id}>
-            <CardHeader className="flex-row flex-wrap items-center gap-2">
-              <CardTitle className="text-base">{category.name}</CardTitle>
-              {category.isSecret && <Badge variant="secondary">Secret</Badge>}
-              {!category.active && <Badge variant="outline">Inactive</Badge>}
-              {canEdit && (
-                <div className="ml-auto flex flex-wrap items-center gap-1">
-                  <label className="flex items-center gap-1 text-sm">
-                    <input type="checkbox" checked={category.active} onChange={(e) => patch.mutate({ id: category.id, body: { active: e.target.checked } })} /> Active
-                  </label>
-                  <label className="flex items-center gap-1 text-sm">
-                    <input type="checkbox" checked={category.isSecret} onChange={(e) => patch.mutate({ id: category.id, body: { isSecret: e.target.checked } })} /> Secret
-                  </label>
-                  <Button size="sm" variant="ghost" onClick={() => reorder.mutate(move(categories, ci, -1).map((c) => c.id))}>↑</Button>
-                  <Button size="sm" variant="ghost" onClick={() => reorder.mutate(move(categories, ci, 1).map((c) => c.id))}>↓</Button>
-                  <Button size="sm" variant="ghost" onClick={() => remove.mutate(category.id)}>Delete</Button>
-                </div>
-              )}
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <ol className="list-decimal space-y-1 pl-6 text-sm">
-                {category.items.map((item, ii) => (
-                  <li key={item.dishId} className={item.active ? "" : "text-muted-foreground line-through"}>
-                    {item.name} <span className="text-muted-foreground">({item.sku})</span>
-                    {canEdit && (
-                      <span className="ml-2 inline-flex gap-1">
-                        <Button size="sm" variant="ghost" onClick={() => saveItems.mutate({ id: category.id, items: move(category.items, ii, -1) })}>↑</Button>
-                        <Button size="sm" variant="ghost" onClick={() => saveItems.mutate({ id: category.id, items: move(category.items, ii, 1) })}>↓</Button>
-                        <Button size="sm" variant="ghost" onClick={() => saveItems.mutate({ id: category.id, items: category.items.map((x, k) => (k === ii ? { ...x, active: !x.active } : x)) })}>
-                          {item.active ? "Hide" : "Show"}
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => saveItems.mutate({ id: category.id, items: category.items.filter((_, k) => k !== ii) })}>✕</Button>
-                      </span>
-                    )}
-                  </li>
-                ))}
-                {category.items.length === 0 && <li className="list-none text-muted-foreground">No dishes yet.</li>}
-              </ol>
-              {canEdit && (
-                <NativeSelect
-                  value=""
-                  aria-label={`Add dish to ${category.name}`}
-                  onChange={(e) => {
-                    const dish = addable.find((d) => d.id === Number(e.target.value));
-                    if (dish) saveItems.mutate({ id: category.id, items: [...category.items, { dishId: dish.id, sku: dish.sku, name: dish.name, active: true }] });
-                  }}
-                >
-                  <option value="">Add a dish…</option>
-                  {addable.map((d) => <option key={d.id} value={d.id}>{d.name} ({d.sku})</option>)}
-                </NativeSelect>
-              )}
-            </CardContent>
-          </Card>
-        );
-      })}
+    <div className="space-y-6">
+      <PageHeader
+        title="Menu categories"
+        description={<>Employees see dishes through these categories. A <b>secret</b> category is not listed, but its dishes can still be ordered by staff searching for them.</>}
+        actions={canEdit && (
+          <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); create.mutate(); }}>
+            <Input className="w-56" placeholder="New category name" aria-label="New category name" value={newName} onChange={(e) => setNewName(e.target.value)} />
+            <Button type="submit" disabled={!newName.trim()}>Add category</Button>
+          </form>
+        )}
+      />
+      <div className="grid gap-4 xl:grid-cols-2">
+        {categories.map((category, ci) => {
+          const addable = (dishes?.items ?? []).filter((d) => !category.items.some((i) => i.dishId === d.id));
+          return (
+            <Card key={category.id} className="h-full">
+              <CardHeader className="flex flex-row flex-wrap items-center gap-2 border-b">
+                <CardTitle className="text-base">{category.name}</CardTitle>
+                {category.isSecret && <Badge variant="secondary">Secret</Badge>}
+                {!category.active && <Badge variant="outline">Inactive</Badge>}
+                <span className="text-sm text-muted-foreground">{category.items.length} dish(es)</span>
+                {canEdit && (
+                  <div className="ml-auto flex flex-wrap items-center gap-4">
+                    <CheckboxField label="Active" checked={category.active} onCheckedChange={(on) => patch.mutate({ id: category.id, body: { active: on } })} />
+                    <CheckboxField label="Secret" checked={category.isSecret} onCheckedChange={(on) => patch.mutate({ id: category.id, body: { isSecret: on } })} />
+                    <div className="flex items-center gap-0.5">
+                      <IconButton label="Move category up" icon={ArrowUp} disabled={ci === 0} onClick={() => reorder.mutate(move(categories, ci, -1).map((c) => c.id))} />
+                      <IconButton label="Move category down" icon={ArrowDown} disabled={ci === categories.length - 1} onClick={() => reorder.mutate(move(categories, ci, 1).map((c) => c.id))} />
+                      <IconButton label="Delete category" icon={Trash2} className="text-destructive hover:text-destructive" onClick={() => remove.mutate(category.id)} />
+                    </div>
+                  </div>
+                )}
+              </CardHeader>
+              <CardContent className="flex flex-1 flex-col gap-3">
+                {category.items.length === 0 ? (
+                  <p className="flex-1 rounded-md border border-dashed py-6 text-center text-sm text-muted-foreground">No dishes yet. Add one below.</p>
+                ) : (
+                  <ul className="divide-y rounded-md border">
+                    {category.items.map((item, ii) => (
+                      <li key={item.dishId} className="flex items-center gap-3 px-3 py-1.5 text-sm">
+                        <span className="w-5 text-right tabular-nums text-muted-foreground">{ii + 1}</span>
+                        <span className={item.active ? "font-medium" : "font-medium text-muted-foreground"}>{item.name}</span>
+                        <span className="text-muted-foreground">{item.sku}</span>
+                        {!item.active && <Badge variant="outline">Hidden</Badge>}
+                        {canEdit && (
+                          <span className="ml-auto flex items-center gap-0.5">
+                            <IconButton label="Move dish up" icon={ArrowUp} disabled={ii === 0} onClick={() => saveItems.mutate({ id: category.id, items: move(category.items, ii, -1) })} />
+                            <IconButton label="Move dish down" icon={ArrowDown} disabled={ii === category.items.length - 1} onClick={() => saveItems.mutate({ id: category.id, items: move(category.items, ii, 1) })} />
+                            <IconButton
+                              label={item.active ? "Hide dish" : "Show dish"}
+                              icon={item.active ? EyeOff : Eye}
+                              onClick={() => saveItems.mutate({ id: category.id, items: category.items.map((x, k) => (k === ii ? { ...x, active: !x.active } : x)) })}
+                            />
+                            <IconButton label="Remove from category" icon={X} onClick={() => saveItems.mutate({ id: category.id, items: category.items.filter((_, k) => k !== ii) })} />
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {canEdit && (
+                  <NativeSelect
+                    className="mt-auto w-full max-w-sm"
+                    value=""
+                    aria-label={`Add dish to ${category.name}`}
+                    onChange={(e) => {
+                      const dish = addable.find((d) => d.id === Number(e.target.value));
+                      if (dish) saveItems.mutate({ id: category.id, items: [...category.items, { dishId: dish.id, sku: dish.sku, name: dish.name, active: true }] });
+                    }}
+                  >
+                    <option value="">Add a dish…</option>
+                    {addable.map((d) => <option key={d.id} value={d.id}>{d.name} ({d.sku})</option>)}
+                  </NativeSelect>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
 }

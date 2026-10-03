@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { CheckboxField } from "@/components/checkbox-field";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -116,9 +117,7 @@ export function DetailsForm({ company, canEdit }: Props) {
               <p className="mb-1 text-sm font-medium">Working days (deliveries only on these days)</p>
               <div className="flex flex-wrap gap-3">
                 {WEEKDAY_NAMES.map((label, i) => (
-                  <label key={label} className="flex items-center gap-1.5 text-sm">
-                    <input type="checkbox" checked={workingDays.includes(i + 1)} onChange={() => toggleDay(i + 1)} /> {label}
-                  </label>
+                  <CheckboxField key={label} label={label} checked={workingDays.includes(i + 1)} onCheckedChange={() => toggleDay(i + 1)} />
                 ))}
               </div>
               {errors && Object.keys(errors).some((k) => k.startsWith("workingDays")) && <p className="text-sm text-destructive">Pick at least one valid working day</p>}

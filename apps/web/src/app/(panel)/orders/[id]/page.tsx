@@ -29,13 +29,13 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
   if (!order) return <p className="text-muted-foreground">Loading…</p>;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <Link className="text-sm underline" href="/orders">← All orders</Link>
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-xl font-semibold">Order #{order.id}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Order #{order.id}</h1>
         <StatusBadge status={order.status} />
         {order.invoiceId && <span className="text-sm text-muted-foreground">Invoice #{order.invoiceId}</span>}
-        <span className="ml-auto text-xl font-semibold">{formatCents(order.totalCents)}</span>
+        <span className="ml-auto text-2xl font-semibold tabular-nums">{formatCents(order.totalCents)}</span>
       </div>
       {order.rejectionReason && <p className="rounded-md border p-2 text-sm">Rejected: {order.rejectionReason}</p>}
 

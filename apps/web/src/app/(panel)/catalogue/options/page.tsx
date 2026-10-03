@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { PERMISSIONS, formatCents } from "@fernleaf/shared";
+import { Input } from "@/components/ui/input";
+import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,12 +14,12 @@ import { CentsInput } from "@/components/cents-input";
 import { CheckList } from "@/components/check-list";
 import { FormField } from "@/components/form-field";
 import { Pagination } from "@/components/pagination";
+import { usePageSize } from "@/lib/use-page-size";
 import { useReference } from "@/hooks/use-reference";
 import { apiGet, apiPatch, apiPost, errorMessage, fieldErrors } from "@/lib/api";
 import { useMe } from "@/lib/auth";
 import type { OptionItem, Paged } from "@/lib/types";
 
-const PAGE_SIZE = 10;
 
 // Create-or-edit form. `option` = null means create.
 function OptionForm({ option, onDone }: { option: OptionItem | null; onDone: () => void }) {
@@ -78,11 +80,12 @@ export default function OptionsPage() {
   const { can } = useMe();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = usePageSize("options");
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<OptionItem | "new" | null>(null);
 
-  const query = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE), ...(search ? { search } : {}) });
-  const { data } = useQuery({ queryKey: ["options", page, search], queryFn: () => apiGet<Paged<OptionItem>>(`/options?${query}`) });
+  const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize), ...(search ? { search } : {}) });
+  const { data } = useQuery({ queryKey: ["options", page, pageSize, search], queryFn: () => apiGet<Paged<OptionItem>>(`/options?${query}`) });
 
   const toggle = useMutation({
     mutationFn: (o: OptionItem) => apiPatch(`/options/${o.id}`, { active: !o.active }),
@@ -92,14 +95,13 @@ export default function OptionsPage() {
   const canEdit = can(PERMISSIONS.CATALOGUE_WRITE);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <h1 className="text-xl font-semibold">Options</h1>
-        {canEdit && <Button onClick={() => setEditing("new")}>New option</Button>}
-      </div>
+    <div className="space-y-6">
+      <PageHeader title="Options"
+        actions={<>{canEdit && <Button onClick={() => setEditing("new")}>New option</Button>}</>}
+      />
       {editing && <OptionForm key={editing === "new" ? "new" : editing.id} option={editing === "new" ? null : editing} onDone={() => setEditing(null)} />}
-      <input
-        className="h-9 w-full max-w-xs rounded-md border border-input bg-background px-3 text-sm"
+      <Input
+        className="max-w-xs"
         placeholder="Search options"
         value={search}
         onChange={(e) => { setSearch(e.target.value); setPage(1); }}
@@ -127,7 +129,7 @@ export default function OptionsPage() {
           ))}
         </TableBody>
       </Table>
-      <Pagination page={page} pageSize={PAGE_SIZE} total={data?.total ?? 0} onPage={setPage} />
+      <Pagination page={page} pageSize={pageSize} onPageSize={(n) => { setPageSize(n); setPage(1); }} total={data?.total ?? 0} onPage={setPage} />
     </div>
   );
 }

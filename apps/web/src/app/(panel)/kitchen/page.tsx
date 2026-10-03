@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { PERMISSIONS } from "@fernleaf/shared";
+import { Input } from "@/components/ui/input";
+import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -69,11 +71,11 @@ export default function KitchenPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Kitchen board</h1>
+    <div className="space-y-6">
+      <PageHeader title="Kitchen board" />
       <div className="flex flex-wrap items-end gap-3">
         <label className="space-y-1 text-sm"><span className="block text-xs text-muted-foreground">Delivery date</span>
-          <input type="date" className="h-9 rounded-md border border-input bg-background px-2" value={date} onChange={(e) => setDate(e.target.value)} /></label>
+          <Input type="date" className="w-44" value={date} onChange={(e) => setDate(e.target.value)} /></label>
         <NativeSelect aria-label="Station" value={stationId} onChange={(e) => setStationId(e.target.value)}>
           <option value="">All stations</option>
           {stations.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -99,8 +101,11 @@ export default function KitchenPage() {
             {COLUMNS.map((col) => {
               const units = station.units.filter((u) => u.status === col.status);
               return (
-                <div key={col.status} className="space-y-2">
-                  <p className="text-sm font-medium">{col.title} <span className="text-muted-foreground">({units.length})</span></p>
+                <div key={col.status} className="space-y-2 rounded-lg bg-muted/40 p-2">
+                  <p className="flex items-center gap-2 px-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                    {col.title} <Badge variant="secondary">{units.length}</Badge>
+                  </p>
+                  {units.length === 0 && <p className="px-1 py-4 text-center text-sm text-muted-foreground">Nothing here</p>}
                   {units.map((u) => <UnitCard key={u.unitId} unit={u} />)}
                 </div>
               );

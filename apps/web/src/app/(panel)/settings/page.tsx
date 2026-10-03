@@ -4,6 +4,9 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { PERMISSIONS } from "@fernleaf/shared";
+import { Input } from "@/components/ui/input";
+import { PageHeader } from "@/components/page-header";
+import { CheckboxField } from "@/components/checkbox-field";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormField } from "@/components/form-field";
@@ -46,7 +49,7 @@ function SettingsForm({ settings, canEdit }: { settings: KitchenSettings; canEdi
               <p className="mb-1 text-sm font-medium">Kitchen working days</p>
               <div className="flex flex-wrap gap-3">
                 {WEEKDAY_NAMES.map((label, i) => (
-                  <label key={label} className="flex items-center gap-1.5 text-sm"><input type="checkbox" checked={workingDays.includes(i + 1)} onChange={() => toggleDay(i + 1)} /> {label}</label>
+                  <CheckboxField key={label} label={label} checked={workingDays.includes(i + 1)} onCheckedChange={() => toggleDay(i + 1)} />
                 ))}
               </div>
               {errors && Object.keys(errors).some((k) => k.startsWith("workingDays")) && <p className="text-sm text-destructive">Pick at least one working day</p>}
@@ -89,15 +92,18 @@ function Holidays({ canEdit }: { canEdit: boolean }) {
         <ul className="space-y-1 text-sm">
           {data.map((h) => (
             <li key={h.id} className="flex items-center gap-2"><span className="flex-1">{formatDate(h.date)} {h.name && `· ${h.name}`}</span>
-              {canEdit && <Button size="sm" variant="ghost" onClick={() => remove.mutate(h.id)}>Remove</Button>}</li>
+              {canEdit && <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => remove.mutate(h.id)}>Remove</Button>}</li>
           ))}
           {data.length === 0 && <li className="text-muted-foreground">None.</li>}
         </ul>
         {canEdit && (
-          <form className="flex flex-wrap items-start gap-2" onSubmit={(e) => { e.preventDefault(); add.mutate(); }}>
-            <div className="w-44"><FormField name="date" label="" type="date" aria-label="Holiday date" value={date} onChange={(e) => setDate(e.target.value)} errors={errors} /></div>
-            <input className="h-9 w-56 rounded-md border border-input bg-background px-3 text-sm" placeholder="Name (optional)" aria-label="Holiday name" value={name} onChange={(e) => setName(e.target.value)} />
-            <Button type="submit" disabled={!date}>Add holiday</Button>
+          <form className="space-y-1.5" onSubmit={(e) => { e.preventDefault(); add.mutate(); }}>
+            <div className="flex flex-wrap items-center gap-2">
+              <Input type="date" className="w-44" aria-label="Holiday date" aria-invalid={!!errors?.date} value={date} onChange={(e) => setDate(e.target.value)} />
+              <Input className="w-56" placeholder="Name (optional)" aria-label="Holiday name" value={name} onChange={(e) => setName(e.target.value)} />
+              <Button type="submit" disabled={!date}>Add holiday</Button>
+            </div>
+            {errors?.date && <p className="text-sm text-destructive">{errors.date}</p>}
           </form>
         )}
       </CardContent>
@@ -133,8 +139,8 @@ export default function SettingsPage() {
   const canEdit = can(PERMISSIONS.SETTINGS_WRITE);
   const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: () => apiGet<KitchenSettings>("/settings") });
   return (
-    <div className="max-w-3xl space-y-4">
-      <h1 className="text-xl font-semibold">Settings</h1>
+    <div className="space-y-6">
+      <PageHeader title="Settings" />
       {settings ? <SettingsForm key={JSON.stringify(settings)} settings={settings} canEdit={canEdit} /> : <p className="text-muted-foreground">Loading…</p>}
       <Holidays canEdit={canEdit} />
       {canEdit && <DemoData />}

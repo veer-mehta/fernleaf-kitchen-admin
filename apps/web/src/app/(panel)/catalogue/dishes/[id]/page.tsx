@@ -73,7 +73,7 @@ function DishForm({ dish }: { dish: DishDetail | null }) {
 
   return (
     <Card>
-      <CardHeader className="flex-row items-center justify-between">
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-base">{dish ? "Dish details" : "New dish"}</CardTitle>
         {dish && <Badge variant={dish.active ? "secondary" : "outline"}>{dish.active ? "Active" : "Inactive"}</Badge>}
       </CardHeader>
@@ -144,7 +144,7 @@ export default function DishPage({ params }: { params: Promise<{ id: string }> }
   if (!isNew && !dish) return <p className="text-muted-foreground">Loading…</p>;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <Link className="text-sm underline" href="/catalogue/dishes">← All dishes</Link>
       {/* key remounts the form when a different dish loads, so its fields restart from that dish */}
       <DishForm key={dish?.id ?? "new"} dish={dish ?? null} />
