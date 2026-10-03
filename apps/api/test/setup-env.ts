@@ -6,3 +6,5 @@ import { resolve } from "path";
 config({ path: resolve(__dirname, "../../../.env"), quiet: true });
 process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
 process.env.JWT_SECRET = process.env.JWT_SECRET ?? "test-secret";
+// The background cut-off job must not run during tests (it could change data mid-test).
+process.env.JOBS_ENABLED = "false";
