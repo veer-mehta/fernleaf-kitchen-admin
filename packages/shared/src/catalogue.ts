@@ -35,10 +35,12 @@ export const OptionInput = z.object({
   costCents: cents,
   allergenIds: z.array(id).default([]),
   dietaryTagIds: z.array(id).default([]),
+  portionSizeIds: z.array(id).default([]), // [Should] the sizes this option can be served in
 });
 export const UpdateOptionInput = OptionInput.extend({
   allergenIds: z.array(id),
   dietaryTagIds: z.array(id),
+  portionSizeIds: z.array(id),
 })
   .partial()
   .extend({ active: z.boolean().optional() });
@@ -59,7 +61,10 @@ export const GroupsInput = z.object({
         .array(id)
         .min(1, "A group needs at least one option")
         .refine((ids) => new Set(ids).size === ids.length, "An option can only be listed once"),
-      portions: z.array(z.object({ portionSizeId: id, extraCents: cents })).default([]),
+      portions: z
+        .array(z.object({ portionSizeId: id, extraCents: cents }))
+        .refine((p) => new Set(p.map((x) => x.portionSizeId)).size === p.length, "A size can only be listed once")
+        .default([]),
     }),
   ),
 });

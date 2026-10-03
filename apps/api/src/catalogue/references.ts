@@ -4,6 +4,7 @@ import { PrismaService } from "../prisma/prisma.service";
 interface Refs {
   allergenIds?: number[];
   dietaryTagIds?: number[];
+  portionSizeIds?: number[];
   stationId?: number | null;
 }
 
@@ -22,6 +23,12 @@ export async function assertReferencesExist(prisma: PrismaService, refs: Refs) {
     const ids = [...new Set(refs.dietaryTagIds)];
     if ((await prisma.dietaryTag.count({ where: { id: { in: ids } } })) !== ids.length) {
       fields.dietaryTagIds = "One of the dietary tags does not exist";
+    }
+  }
+  if (refs.portionSizeIds?.length) {
+    const ids = [...new Set(refs.portionSizeIds)];
+    if ((await prisma.portionSize.count({ where: { id: { in: ids } } })) !== ids.length) {
+      fields.portionSizeIds = "One of the sizes does not exist";
     }
   }
   if (refs.stationId) {

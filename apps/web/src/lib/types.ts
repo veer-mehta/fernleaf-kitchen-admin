@@ -22,6 +22,7 @@ export interface DishGroup {
   name: string;
   required: boolean;
   usesPortions: boolean;
+  portions: { portionSizeId: number; name: string; extraCents: number }[];
   options: { id: number; name: string; costCents: number; active: boolean }[];
 }
 export interface DishDetail extends Omit<DishListItem, "station"> {
@@ -40,6 +41,7 @@ export interface OptionItem {
   active: boolean;
   allergens: Named[];
   dietaryTags: Named[];
+  portionSizes: Named[];
 }
 export interface CategoryItemRow {
   dishId: number;
@@ -128,7 +130,10 @@ export interface EmployeeRow {
 
 // ---------- menu and orders ----------
 export interface MenuOption { optionId: number; name: string; priceCents: number; allergens: string[]; dietaryTags: string[] }
-export interface MenuGroup { groupId: number; name: string; required: boolean; options: MenuOption[] }
+export interface MenuGroup {
+  groupId: number; name: string; required: boolean; options: MenuOption[];
+  portions: { portionSizeId: number; name: string; extraCents: number }[]; // empty = not sold in sizes
+}
 export interface MenuDish {
   dishId: number; sku: string; name: string; description: string; imageUrl: string | null;
   temperature: "HOT" | "COLD"; priceCents: number; minOrderQty: number | null;
@@ -147,7 +152,7 @@ export interface OrderListItem {
 export interface OrderRequest {
   employeeId: number; deliveryDate: string; deliveryTime?: string; addressId?: number; packaging?: Packaging;
   status: "DRAFT" | "PLACED";
-  lines: { dishId: number; quantity: number; combinations: { quantity: number; selections: { groupId: number; optionId: number }[] }[] }[];
+  lines: { dishId: number; quantity: number; combinations: { quantity: number; selections: { groupId: number; optionId: number; portionSizeId?: number }[] }[] }[];
 }
 export interface OrderDetail {
   id: number; status: OrderStatus; rejectionReason: string | null;

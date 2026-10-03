@@ -16,7 +16,8 @@ export function DishCard({ dish }: { dish: MenuDish }) {
       </p>
       {dish.groups.map((g) => (
         <p key={g.groupId} className="mt-1 text-xs">
-          <span className="font-medium">{g.name}</span> {g.required ? "(required)" : "(optional)"}:{" "}
+          <span className="font-medium">{g.name}</span> {g.required ? "(required)" : "(optional)"}
+          {g.portions.length > 0 && <> sizes: {g.portions.map((p) => `${p.name}${p.extraCents ? ` +${formatCents(p.extraCents)}` : ""}`).join(", ")}</>}:{" "}
           {g.options.map((o) => `${o.name}${o.priceCents ? ` +${formatCents(o.priceCents)}` : ""}`).join(", ")}
         </p>
       ))}

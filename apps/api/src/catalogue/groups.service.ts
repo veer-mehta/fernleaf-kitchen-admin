@@ -26,6 +26,7 @@ export class GroupsService {
       throw new DomainError("NOT_FOUND", "Dish not found", 404);
     }
     await this.assertOptionsAndPortionsExist(groups);
+    await this.assertPortionRules(groups);
 
     await this.prisma.$transaction(async (tx) => {
       await tx.optionGroup.deleteMany({ where: { dishId } }); // items and portions cascade
@@ -47,6 +48,43 @@ export class GroupsService {
     });
 
     return this.dishes.findOne(dishId);
+  }
+
+  // Sizes ([Should] portions): a group either sells its options in sizes or it does not. If it does,
+  // it must list at least one size and EVERY option in it must be able to be served in EVERY one of those sizes.
+  private async assertPortionRules(groups: GroupInput[]) {
+    const sizedOptionIds = [...new Set(groups.filter((g) => g.usesPortions).flatMap((g) => g.optionIds))];
+    const sizeIds = [...new Set(groups.flatMap((g) => g.portions.map((p) => p.portionSizeId)))];
+    const [sizes, supported, options] = await Promise.all([
+      this.prisma.portionSize.findMany({ where: { id: { in: sizeIds } } }),
+      this.prisma.optionPortion.findMany({ where: { optionId: { in: sizedOptionIds } } }),
+      this.prisma.option.findMany({ where: { id: { in: sizedOptionIds } }, select: { id: true, name: true } }),
+    ]);
+    const sizeName = new Map(sizes.map((s) => [s.id, s.name]));
+    const optionName = new Map(options.map((o) => [o.id, o.name]));
+    const canServe = new Set(supported.map((s) => `${s.optionId}:${s.portionSizeId}`));
+
+    const fields: Record<string, string> = {};
+    groups.forEach((group, i) => {
+      if (!group.usesPortions) {
+        if (group.portions.length > 0) fields[`groups.${i}.portions`] = "Turn on sizes for this group, or remove the sizes";
+        return;
+      }
+      if (group.portions.length === 0) {
+        fields[`groups.${i}.portions`] = "Add at least one size, or turn sizes off for this group";
+        return;
+      }
+      const problems: string[] = [];
+      for (const optionId of group.optionIds) {
+        for (const size of group.portions) {
+          if (!canServe.has(`${optionId}:${size.portionSizeId}`)) problems.push(`${optionName.get(optionId)} is not sold in ${sizeName.get(size.portionSizeId)}`);
+        }
+      }
+      if (problems.length > 0) fields[`groups.${i}.optionIds`] = problems.join("; ");
+    });
+    if (Object.keys(fields).length > 0) {
+      throw new DomainError("INVALID_PORTIONS", "Sizes do not match the options in this group", 400, fields);
+    }
   }
 
   private async assertOptionsAndPortionsExist(groups: GroupInput[]) {

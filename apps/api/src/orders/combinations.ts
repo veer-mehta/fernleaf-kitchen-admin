@@ -6,6 +6,7 @@ export interface GroupRule {
   name: string;
   required: boolean;
   optionIds: number[]; // the options this group offers
+  portionSizeIds?: number[]; // the sizes it sells them in; empty or missing = not sold in sizes
 }
 export interface Selection {
   groupId: number;
@@ -78,6 +79,14 @@ export function validateLine(
         }
         chosen.set(sel.groupId, sel.optionId);
         if (!group.optionIds.includes(sel.optionId)) add(at("selections"), `"${group.name}": that option is not offered`);
+
+        // A group sold in sizes needs one of its sizes chosen; a group that is not must not get one.
+        const sizes = group.portionSizeIds ?? [];
+        if (sizes.length > 0) {
+          if (sel.portionSizeId === undefined || !sizes.includes(sel.portionSizeId)) add(at("selections"), `"${group.name}": choose a size`);
+        } else if (sel.portionSizeId !== undefined) {
+          add(at("selections"), `"${group.name}" is not sold in sizes`);
+        }
       }
       for (const group of groups) {
         if (group.required && !chosen.has(group.groupId)) add(at("selections"), `Choose an option for "${group.name}"`);

@@ -13,7 +13,7 @@ import { formatDate } from "@/lib/format";
 import type { CompanyDetail, CompanyListItem, EmployeeRow, Menu, MenuDish, OrderDetail, OrderRequest, Packaging, Paged } from "@/lib/types";
 
 // ---- the screen's own state: text boxes hold text, and are turned into numbers only on save ----
-interface ComboDraft { key: number; quantity: string; selections: Record<number, string> } // groupId -> optionId ("" = none)
+interface ComboDraft { key: number; quantity: string; selections: Record<number, string>; sizes: Record<number, string> } // groupId -> optionId / sizeId ("" = none)
 interface LineDraft { key: number; dishId: number; quantity: string; combos: ComboDraft[] }
 
 let nextKey = 1;
@@ -33,6 +33,7 @@ function linesFromRequest(request: OrderRequest): LineDraft[] {
       key: newKey(),
       quantity: String(c.quantity),
       selections: Object.fromEntries(c.selections.map((s) => [s.groupId, String(s.optionId)])),
+      sizes: Object.fromEntries(c.selections.filter((s) => s.portionSizeId !== undefined).map((s) => [s.groupId, String(s.portionSizeId)])),
     })),
   }));
 }
@@ -74,7 +75,12 @@ export function OrderBuilder({ existing }: { existing?: OrderDetail }) {
   // ---- price preview (the server recalculates everything; this is only a guide) ----
   const comboUnit = (dish: MenuDish, combo: ComboDraft) =>
     dish.priceCents +
-    dish.groups.reduce((sum, g) => sum + (g.options.find((o) => String(o.optionId) === combo.selections[g.groupId])?.priceCents ?? 0), 0);
+    dish.groups.reduce((sum, g) => {
+      const option = g.options.find((o) => String(o.optionId) === combo.selections[g.groupId]);
+      if (!option) return sum;
+      const size = g.portions.find((p) => String(p.portionSizeId) === combo.sizes[g.groupId]);
+      return sum + option.priceCents + (size?.extraCents ?? 0); // a size adds its own charge
+    }, 0);
   const comboTotal = (dish: MenuDish, combo: ComboDraft) => comboUnit(dish, combo) * (toInt(combo.quantity) ?? 0);
   const total = lines.reduce((sum, l) => {
     const dish = dishById(l.dishId);
@@ -86,7 +92,7 @@ export function OrderBuilder({ existing }: { existing?: OrderDetail }) {
   const addLine = () => {
     const dishId = Number(pickDish);
     if (!dishId) return;
-    setLines([...lines, { key: newKey(), dishId, quantity: "1", combos: [{ key: newKey(), quantity: "1", selections: {} }] }]);
+    setLines([...lines, { key: newKey(), dishId, quantity: "1", combos: [{ key: newKey(), quantity: "1", selections: {}, sizes: {} }] }]);
     setPickDish("");
   };
   const setLineQuantity = (line: LineDraft, quantity: string) => {
@@ -113,7 +119,11 @@ export function OrderBuilder({ existing }: { existing?: OrderDetail }) {
           quantity: toInt(l.quantity) ?? 0,
           combinations: l.combos.map((c) => ({
             quantity: toInt(c.quantity) ?? 0,
-            selections: Object.entries(c.selections).filter(([, optionId]) => optionId).map(([groupId, optionId]) => ({ groupId: Number(groupId), optionId: Number(optionId) })),
+            selections: Object.entries(c.selections).filter(([, optionId]) => optionId).map(([groupId, optionId]) => ({
+              groupId: Number(groupId),
+              optionId: Number(optionId),
+              ...(c.sizes[Number(groupId)] ? { portionSizeId: Number(c.sizes[Number(groupId)]) } : {}),
+            })),
           })),
         })),
       };
@@ -208,17 +218,26 @@ export function OrderBuilder({ existing }: { existing?: OrderDetail }) {
                       <span>with</span>
                       {dish.groups.length === 0 && <span className="text-muted-foreground">no choices</span>}
                       {dish.groups.map((g) => (
-                        <NativeSelect key={g.groupId} aria-label={`${g.name} for combination ${ci + 1} of ${dish.name}`} value={combo.selections[g.groupId] ?? ""} onChange={(e) => updateCombo(line, combo.key, { selections: { ...combo.selections, [g.groupId]: e.target.value } })}>
-                          <option value="">{g.required ? `${g.name} (required)…` : `${g.name}: none`}</option>
-                          {g.options.map((o) => <option key={o.optionId} value={o.optionId}>{o.name}{o.priceCents ? ` +${formatCents(o.priceCents)}` : ""}</option>)}
-                        </NativeSelect>
+                        <span key={g.groupId} className="inline-flex gap-1">
+                          <NativeSelect aria-label={`${g.name} for combination ${ci + 1} of ${dish.name}`} value={combo.selections[g.groupId] ?? ""} onChange={(e) => updateCombo(line, combo.key, { selections: { ...combo.selections, [g.groupId]: e.target.value } })}>
+                            <option value="">{g.required ? `${g.name} (required)…` : `${g.name}: none`}</option>
+                            {g.options.map((o) => <option key={o.optionId} value={o.optionId}>{o.name}{o.priceCents ? ` +${formatCents(o.priceCents)}` : ""}</option>)}
+                          </NativeSelect>
+                          {/* a group sold in sizes needs one chosen with the option */}
+                          {g.portions.length > 0 && (
+                            <NativeSelect aria-label={`Size of ${g.name} for combination ${ci + 1} of ${dish.name}`} value={combo.sizes[g.groupId] ?? ""} onChange={(e) => updateCombo(line, combo.key, { sizes: { ...combo.sizes, [g.groupId]: e.target.value } })}>
+                              <option value="">Size…</option>
+                              {g.portions.map((p) => <option key={p.portionSizeId} value={p.portionSizeId}>{p.name}{p.extraCents ? ` +${formatCents(p.extraCents)}` : ""}</option>)}
+                            </NativeSelect>
+                          )}
+                        </span>
                       ))}
                       <span className="ml-auto font-medium">{formatCents(comboTotal(dish, combo))}</span>
                       {line.combos.length > 1 && <Button size="sm" variant="ghost" onClick={() => updateLine(line.key, { combos: line.combos.filter((c) => c.key !== combo.key) })}>✕</Button>}
                     </div>
                   ))}
                   <div className="flex items-center gap-3 text-sm">
-                    <Button size="sm" variant="outline" onClick={() => updateLine(line.key, { combos: [...line.combos, { key: newKey(), quantity: "1", selections: {} }] })}>Split into another combination</Button>
+                    <Button size="sm" variant="outline" onClick={() => updateLine(line.key, { combos: [...line.combos, { key: newKey(), quantity: "1", selections: {}, sizes: {} }] })}>Split into another combination</Button>
                     <span className={allocated === lineQty ? "text-muted-foreground" : "text-destructive"}>{allocated} of {lineQty} allocated to combinations</span>
                   </div>
                 </div>

@@ -132,14 +132,8 @@ export class OrderBuilder {
         name: g.name,
         required: g.required,
         optionIds: g.options.map((o) => o.optionId),
+        portionSizeIds: g.portions.map((p) => p.portionSizeId),
       }));
-
-      // Portion sizes ([Should]) are not built yet, so a request naming one is refused clearly.
-      const portionAt = line.combinations.findIndex((c) => c.selections.some((s) => s.portionSizeId !== undefined));
-      if (portionAt >= 0) {
-        fields[`lines.${i}.combinations.${portionAt}.selections`] = "Portion sizes are not available yet";
-        continue;
-      }
 
       try {
         validateLine(line.quantity, dish.minOrderQty, line.combinations, groups, `lines.${i}.`);
@@ -160,8 +154,10 @@ export class OrderBuilder {
           const selection = combo.selections.find((s) => s.groupId === group.groupId);
           if (!selection) continue;
           const option = group.options.find((o) => o.optionId === selection.optionId)!;
-          picks.push({ optionCents: option.priceCents, portionExtraCents: 0 });
-          optionsSnapshot.push({ groupName: group.name, optionName: option.name, portion: null, priceCents: option.priceCents });
+          // The chosen size (if the group is sold in sizes) adds its own charge on top of the option's price.
+          const size = group.portions.find((p) => p.portionSizeId === selection.portionSizeId);
+          picks.push({ optionCents: option.priceCents, portionExtraCents: size?.extraCents ?? 0 });
+          optionsSnapshot.push({ groupName: group.name, optionName: option.name, portion: size?.name ?? null, priceCents: option.priceCents + (size?.extraCents ?? 0) });
           option.allergens.filter((a) => employeeAllergens.has(a)).forEach((a) => warnings.add(`${option.name} contains ${a}, which ${employee.name} is allergic to`));
         }
         const unit = priceCombination(dish.priceCents, picks);

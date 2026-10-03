@@ -24,15 +24,17 @@ function OptionForm({ option, onDone }: { option: OptionItem | null; onDone: () 
   const queryClient = useQueryClient();
   const allergens = useReference("allergens").data ?? [];
   const tags = useReference("dietary-tags").data ?? [];
+  const sizes = useReference("portion-sizes").data ?? [];
   const [name, setName] = useState(option?.name ?? "");
   const [cost, setCost] = useState<number | null>(option?.costCents ?? 0);
   const [allergenIds, setAllergenIds] = useState(option?.allergens.map((a) => a.id) ?? []);
   const [tagIds, setTagIds] = useState(option?.dietaryTags.map((t) => t.id) ?? []);
+  const [sizeIds, setSizeIds] = useState(option?.portionSizes.map((p) => p.id) ?? []);
   const [errors, setErrors] = useState<Record<string, string> | undefined>();
 
   const save = useMutation({
     mutationFn: () => {
-      const body = { name, costCents: cost ?? 0, allergenIds, dietaryTagIds: tagIds };
+      const body = { name, costCents: cost ?? 0, allergenIds, dietaryTagIds: tagIds, portionSizeIds: sizeIds };
       return option ? apiPatch(`/options/${option.id}`, body) : apiPost("/options", body);
     },
     onSuccess: () => {
@@ -56,6 +58,12 @@ function OptionForm({ option, onDone }: { option: OptionItem | null; onDone: () 
           </div>
           <div><p className="mb-1 text-sm font-medium">Allergens</p><CheckList items={allergens} selected={allergenIds} onChange={setAllergenIds} /></div>
           <div><p className="mb-1 text-sm font-medium">Dietary tags</p><CheckList items={tags} selected={tagIds} onChange={setTagIds} /></div>
+          <div>
+            <p className="mb-1 text-sm font-medium">Sizes it can be served in</p>
+            <CheckList items={sizes} selected={sizeIds} onChange={setSizeIds} />
+            {errors?.portionSizeIds && <p className="text-sm text-destructive">{errors.portionSizeIds}</p>}
+            <p className="text-xs text-muted-foreground">Only needed if a dish sells this option in sizes (e.g. Regular and Large).</p>
+          </div>
           <div className="flex gap-2">
             <Button type="submit" disabled={save.isPending}>Save</Button>
             <Button type="button" variant="ghost" onClick={onDone}>Cancel</Button>
@@ -99,7 +107,7 @@ export default function OptionsPage() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Name</TableHead><TableHead>Cost</TableHead><TableHead>Allergens</TableHead><TableHead>Dietary</TableHead><TableHead>Status</TableHead><TableHead />
+            <TableHead>Name</TableHead><TableHead>Cost</TableHead><TableHead>Allergens</TableHead><TableHead>Dietary</TableHead><TableHead>Sizes</TableHead><TableHead>Status</TableHead><TableHead />
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -109,6 +117,7 @@ export default function OptionsPage() {
               <TableCell>{formatCents(o.costCents)}</TableCell>
               <TableCell>{o.allergens.map((a) => a.name).join(", ") || "–"}</TableCell>
               <TableCell>{o.dietaryTags.map((t) => t.name).join(", ") || "–"}</TableCell>
+              <TableCell>{o.portionSizes.map((p) => p.name).join(", ") || "–"}</TableCell>
               <TableCell><Badge variant={o.active ? "secondary" : "outline"}>{o.active ? "Active" : "Inactive"}</Badge></TableCell>
               <TableCell className="space-x-1 text-right">
                 {canEdit && <Button size="sm" variant="ghost" onClick={() => setEditing(o)}>Edit</Button>}

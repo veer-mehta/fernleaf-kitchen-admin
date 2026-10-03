@@ -6,7 +6,9 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { CentsInput } from "@/components/cents-input";
 import { NativeSelect } from "@/components/native-select";
+import { useReference } from "@/hooks/use-reference";
 import { apiGet, apiPut, errorMessage, fieldErrors } from "@/lib/api";
 import type { DishDetail, OptionItem, Paged } from "@/lib/types";
 
@@ -15,6 +17,7 @@ interface GroupDraft {
   required: boolean;
   usesPortions: boolean;
   optionIds: number[];
+  portions: { portionSizeId: number; extraCents: number }[]; // the sizes sold and each one's extra charge
 }
 
 // Moves item i by `delta` places in a copy of the array (used by the up/down buttons).
@@ -29,9 +32,13 @@ function move<T>(list: T[], i: number, delta: number): T[] {
 export function GroupsEditor({ dish }: { dish: DishDetail }) {
   const queryClient = useQueryClient();
   const [groups, setGroups] = useState<GroupDraft[]>(
-    dish.groups.map((g) => ({ name: g.name, required: g.required, usesPortions: g.usesPortions, optionIds: g.options.map((o) => o.id) })),
+    dish.groups.map((g) => ({
+      name: g.name, required: g.required, usesPortions: g.usesPortions, optionIds: g.options.map((o) => o.id),
+      portions: g.portions.map((p) => ({ portionSizeId: p.portionSizeId, extraCents: p.extraCents })),
+    })),
   );
   const [errors, setErrors] = useState<Record<string, string> | undefined>();
+  const allSizes = useReference("portion-sizes").data ?? [];
 
   // Options available to pick (the first 100 active ones is plenty for this catalogue).
   const { data: optionPage } = useQuery({
@@ -94,11 +101,38 @@ export function GroupsEditor({ dish }: { dish: DishDetail }) {
               </NativeSelect>
               {errors?.[`groups.${i}.optionIds`] && <p className="text-sm text-destructive">{errors[`groups.${i}.optionIds`]}</p>}
               {errors?.[`groups.${i}.name`] && <p className="text-sm text-destructive">{errors[`groups.${i}.name`]}</p>}
+
+              <div className="space-y-1 border-t pt-2">
+                <label className="flex items-center gap-1.5 text-sm">
+                  <input type="checkbox" checked={group.usesPortions} onChange={(e) => update(i, { usesPortions: e.target.checked, portions: e.target.checked ? group.portions : [] })} /> Sold in sizes
+                </label>
+                {group.usesPortions && (
+                  <div className="space-y-1 pl-5">
+                    <p className="text-xs text-muted-foreground">Tick each size this group sells and the extra charge on top of the option’s price. Every option above must be able to be served in each ticked size (set that on the Options page).</p>
+                    {allSizes.map((size) => {
+                      const chosen = group.portions.find((p) => p.portionSizeId === size.id);
+                      return (
+                        <div key={size.id} className="flex items-center gap-2 text-sm">
+                          <label className="flex w-28 items-center gap-1.5">
+                            <input type="checkbox" checked={!!chosen} onChange={(e) => update(i, { portions: e.target.checked ? [...group.portions, { portionSizeId: size.id, extraCents: 0 }] : group.portions.filter((p) => p.portionSizeId !== size.id) })} /> {size.name}
+                          </label>
+                          {chosen && <>
+                            <span className="text-muted-foreground">extra ₹</span>
+                            <CentsInput aria-label={`Extra charge for ${size.name} in group ${i + 1}`} className="h-8 w-24" cents={chosen.extraCents} onCommit={(c) => update(i, { portions: group.portions.map((p) => (p.portionSizeId === size.id ? { ...p, extraCents: c ?? 0 } : p)) })} />
+                          </>}
+                        </div>
+                      );
+                    })}
+                    {allSizes.length === 0 && <p className="text-xs text-muted-foreground">No sizes defined yet. Add them under Lists → Portion sizes.</p>}
+                    {errors?.[`groups.${i}.portions`] && <p className="text-sm text-destructive">{errors[`groups.${i}.portions`]}</p>}
+                  </div>
+                )}
+              </div>
             </div>
           );
         })}
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setGroups([...groups, { name: "", required: false, usesPortions: false, optionIds: [] }])}>Add group</Button>
+          <Button variant="outline" onClick={() => setGroups([...groups, { name: "", required: false, usesPortions: false, optionIds: [], portions: [] }])}>Add group</Button>
           <Button onClick={() => save.mutate()} disabled={save.isPending}>Save groups</Button>
         </div>
       </CardContent>
