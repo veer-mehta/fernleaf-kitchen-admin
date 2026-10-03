@@ -1,5 +1,6 @@
-import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
+import { MiddlewareConsumer, Module, NestModule, RequestMethod } from "@nestjs/common";
 import cookieParser from "cookie-parser";
+import { raw } from "express";
 import helmet from "helmet";
 import { APP_FILTER, APP_PIPE } from "@nestjs/core";
 import { ZodValidationPipe } from "nestjs-zod";
@@ -16,6 +17,7 @@ import { DispatchModule } from "./dispatch/dispatch.module";
 import { DriverModule } from "./driver/driver.module";
 import { EmployeesModule } from "./employees/employees.module";
 import { HealthController } from "./health/health.controller";
+import { ImagesModule } from "./images/images.module";
 import { KitchenModule } from "./kitchen/kitchen.module";
 import { MenuModule } from "./menu/menu.module";
 import { OrdersModule } from "./orders/orders.module";
@@ -26,7 +28,7 @@ import { SettingsModule } from "./settings/settings.module";
 import { StaffModule } from "./staff/staff.module";
 
 @Module({
-  imports: [PrismaModule, ClockModule, AuthModule, StaffModule, ReferenceModule, CatalogueModule, PricingModule, MenuModule, SettingsModule, CompaniesModule, EmployeesModule, OrdersModule, KitchenModule, DispatchModule, DriverModule, BillingModule, DashboardModule, DemoModule],
+  imports: [PrismaModule, ClockModule, AuthModule, StaffModule, ReferenceModule, CatalogueModule, PricingModule, MenuModule, SettingsModule, CompaniesModule, EmployeesModule, OrdersModule, KitchenModule, DispatchModule, DriverModule, BillingModule, DashboardModule, DemoModule, ImagesModule],
   controllers: [HealthController],
   providers: [
     // Registered as providers (not in main.ts) so e2e tests get them too.
@@ -38,5 +40,8 @@ export class AppModule implements NestModule {
   // Registered here, not in main.ts, so the e2e tests run with exactly the same middleware.
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(helmet(), originCheck, cookieParser()).forRoutes("*path");
+    // Photo uploads arrive as the raw file. Nest's built-in parser only reads JSON, so this one
+    // reads image bodies for this route alone, and refuses anything over 1 MB.
+    consumer.apply(raw({ type: ["image/jpeg", "image/png", "image/webp"], limit: "1mb" })).forRoutes({ path: "images", method: RequestMethod.POST });
   }
 }

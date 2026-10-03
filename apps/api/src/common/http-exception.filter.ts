@@ -43,8 +43,19 @@ export class HttpExceptionFilter implements ExceptionFilter {
       return { status, body: { code: `HTTP_${status}`, message: exception.message } };
     }
 
+    // body-parser refuses an oversized body before any controller runs.
+    if (isBodyTooLarge(exception)) {
+      return { status: 413, body: { code: "PAYLOAD_TOO_LARGE", message: `That upload is too large. The limit is ${formatBytes(exception.limit)}.` } };
+    }
+
     // Unknown error: log the detail, never send it to the client.
     this.logger.error(exception);
     return { status: 500, body: { code: "INTERNAL_ERROR", message: "Something went wrong" } };
   }
 }
+
+function isBodyTooLarge(e: unknown): e is { type: string; limit: number } {
+  return typeof e === "object" && e !== null && (e as { type?: string }).type === "entity.too.large";
+}
+
+const formatBytes = (n: number) => (n >= 1024 * 1024 ? `${n / (1024 * 1024)} MB` : `${Math.round(n / 1024)} KB`);

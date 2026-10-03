@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { imageRef } from "./images";
 import { PageQuery } from "./pagination";
 
 const id = z.number().int().positive();
@@ -8,7 +9,7 @@ export const DishInput = z.object({
   sku: z.string().trim().min(1, "SKU is required").max(40),
   name: z.string().trim().min(1, "Name is required").max(120),
   description: z.string().trim().max(1000).default(""),
-  imageUrl: z.string().trim().url("Enter a valid URL").nullable().optional(),
+  imageUrl: imageRef.nullable().optional(),
   temperature: z.enum(["HOT", "COLD"]),
   costCents: cents,
   stationId: id.nullable().optional(),

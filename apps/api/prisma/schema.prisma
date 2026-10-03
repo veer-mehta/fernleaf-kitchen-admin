@@ -593,3 +593,12 @@ model Invoice {
   isDemo     Boolean       @default(false)
   orders     Order[]
 }
+
+// Photos uploaded by staff (a delivery photo, a dish picture). Kept in the database so the app
+// needs no file storage service and survives redeploys; the browser shrinks them before uploading.
+model StoredImage {
+  id          Int      @id @default(autoincrement())
+  contentType String
+  data        Bytes
+  createdAt   DateTime @default(now())
+}

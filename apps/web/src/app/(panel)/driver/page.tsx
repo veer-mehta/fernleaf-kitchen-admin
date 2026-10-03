@@ -5,10 +5,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ImageUpload } from "@/components/image-upload";
 import { Input } from "@/components/ui/input";
 import { apiGet, apiPost, errorMessage, fieldErrors } from "@/lib/api";
 import { formatDate, formatTime } from "@/lib/format";
-import { safeHref } from "@/lib/safe-url";
+import { imageSrc } from "@/lib/safe-url";
 import type { DriverDrop } from "@/lib/types";
 
 const STATUS_TEXT = {
@@ -55,8 +56,7 @@ function DropCard({ drop }: { drop: DriverDrop }) {
       {open && (
         <form className="space-y-2" onSubmit={(e) => { e.preventDefault(); deliver.mutate(); }}>
           <Input className="h-11" placeholder="Note (optional)" aria-label="Note" value={note} onChange={(e) => setNote(e.target.value)} />
-          <Input className="h-11" placeholder="Photo link (optional)" aria-label="Photo link" value={photoUrl} onChange={(e) => setPhotoUrl(e.target.value)} />
-          {photoError && <p className="text-sm text-destructive">{photoError}</p>}
+          <ImageUpload label="Delivery photo (optional)" value={photoUrl} onChange={setPhotoUrl} capture="environment" error={photoError} />
           <div className="flex gap-2">
             <Button type="submit" className="h-12 flex-1 text-base" disabled={deliver.isPending}>Confirm delivered</Button>
             <Button type="button" variant="outline" className="h-12" onClick={() => setOpen(false)}>Cancel</Button>
@@ -67,7 +67,7 @@ function DropCard({ drop }: { drop: DriverDrop }) {
         <p className="text-sm text-muted-foreground">
           Delivered {drop.deliveredAt ? formatTime(drop.deliveredAt) : ""}
           {drop.note && <> · “{drop.note}”</>}
-          {safeHref(drop.photoUrl) && <> · <a className="underline" href={safeHref(drop.photoUrl)} target="_blank" rel="noreferrer noopener">photo</a></>}
+          {imageSrc(drop.photoUrl) && <> · <a className="underline" href={imageSrc(drop.photoUrl)} target="_blank" rel="noreferrer noopener">photo</a></>}
         </p>
       )}
     </section>
