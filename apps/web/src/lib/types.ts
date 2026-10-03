@@ -194,3 +194,45 @@ export interface DriverDrop {
   address: { label: string; line1: string; line2: string; city: string; postalCode: string; instructions: string };
   orders: { id: number; employeeName: string; itemCount: number }[]; note: string | null; photoUrl: string | null; deliveredAt: string | null;
 }
+
+// ---------- dashboards, billing, settings ----------
+export interface AdminDashboard {
+  date: string;
+  ordersByStatus: Record<OrderStatus, number>;
+  activeOrders: number;
+  activeValueCents: number;
+  uninvoiced: { totalCents: number; orderCount: number; companies: { companyId: number; companyName: string; orderCount: number; totalCents: number }[] };
+  upcoming: { from: string; to: string; total: number; days: { date: string; count: number }[] };
+  missingPrices: { total: number; tiers: { tierId: number; name: string; dishes: number; options: number }[] };
+}
+export interface KitchenDashboard {
+  date: string;
+  totals: { pending: number; started: number; done: number; late: number; atRisk: number };
+  stations: { stationId: number | null; name: string; counts: { pending: number; started: number; done: number } }[];
+  nextDeadlines: { orderId: number; companyName: string; plannedKitchenReadyAt: string; unitsLeft: number; urgency: Urgency }[];
+}
+export interface DispatchDashboard {
+  date: string;
+  totals: { open: number; dispatchReady: number; outForDelivery: number; delivered: number; unassigned: number; late: number };
+  onTime: { delivered: number; onTime: number; late: number; ratePercent: number | null };
+  lateDrops: { id: number; company: string; deliveryTime: string; status: DropStatus }[];
+}
+export interface DriverDashboard {
+  date: string;
+  counts: { total: number; delivered: number; remaining: number };
+  drops: { id: number; deliveryTime: string; company: string; status: DropStatus }[];
+}
+export interface Uninvoiced {
+  companies: { companyId: number; companyName: string; orderCount: number; totalCents: number;
+    orders: { id: number; deliveryDate: string; deliveryTime: string; employeeName: string; status: OrderStatus; totalCents: number }[] }[];
+}
+export type InvoiceStatus = "OPEN" | "PAID" | "VOID";
+export interface InvoiceListItem { id: number; company: Named; status: InvoiceStatus; totalCents: number; orderCount: number; createdAt: string; paidAt: string | null }
+export interface InvoiceDetail extends Omit<InvoiceListItem, "orderCount"> {
+  orders: { id: number; employeeName: string; deliveryDate: string; deliveryTime: string; status: OrderStatus; totalCents: number }[];
+}
+export interface KitchenSettings {
+  timezone: string; workingDays: number[]; cutoffTime: string; cutoffWorkingDays: number;
+  kitchenReadyBufferMinutes: number; onTimeGraceMinutes: number; holidays: string[];
+}
+export interface StaffRow { id: number; email: string; name: string; active: boolean; role: Named }

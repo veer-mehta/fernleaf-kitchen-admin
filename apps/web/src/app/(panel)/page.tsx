@@ -1,28 +1,27 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PERMISSIONS } from "@fernleaf/shared";
+import { AdminDashboardView } from "@/components/dashboards/admin-dashboard";
+import { DispatchDashboardView, DriverDashboardView, KitchenDashboardView } from "@/components/dashboards/role-dashboards";
 import { useMe } from "@/lib/auth";
 
-// Placeholder landing page. Task 21 replaces it with each role's real dashboard.
+// Everyone lands here after signing in. What they see depends on what their role may do:
+// the admin dashboard if they hold dashboard:admin, otherwise one per area they work in.
 export default function HomePage() {
-  const { me } = useMe();
+  const { me, can } = useMe();
   if (!me) return null;
+
+  const admin = can(PERMISSIONS.DASHBOARD_ADMIN);
   return (
-    <Card className="max-w-2xl">
-      <CardHeader>
-        <CardTitle>Welcome, {me.name}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        <p className="text-sm text-muted-foreground">Your role is {me.role}. You can access:</p>
-        <div className="flex flex-wrap gap-1">
-          {me.permissions.map((p) => (
-            <Badge key={p} variant="secondary">
-              {p}
-            </Badge>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+    <div className="max-w-5xl space-y-4">
+      <div>
+        <h1 className="text-xl font-semibold">Welcome, {me.name}</h1>
+        <p className="text-sm text-muted-foreground">{me.role} dashboard</p>
+      </div>
+      {admin && <AdminDashboardView />}
+      {!admin && can(PERMISSIONS.KITCHEN_READ) && <KitchenDashboardView />}
+      {!admin && can(PERMISSIONS.DISPATCH_READ) && <DispatchDashboardView />}
+      {!admin && can(PERMISSIONS.DRIVER_OWN_DROPS) && <DriverDashboardView />}
+    </div>
   );
 }
