@@ -8,3 +8,6 @@ export * from "./pagination";
 export * from "./catalogue";
 export * from "./pricing";
 export * from "./categories";
+export * from "./settings";
+export * from "./companies";
+export * from "./orders";

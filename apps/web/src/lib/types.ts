@@ -73,3 +73,95 @@ export interface MissingReport {
   dishes: { dishId: number; sku: string; name: string }[];
   options: { optionId: number; name: string }[];
 }
+
+// ---------- companies and employees ----------
+export interface CompanyListItem {
+  id: number;
+  name: string;
+  tier: Named | null;
+  employeeCount: number;
+  domains: string[];
+}
+export interface Address {
+  id: number;
+  label: string;
+  line1: string;
+  line2: string;
+  city: string;
+  postalCode: string;
+  instructions: string;
+}
+export type Packaging = "STANDARD" | "ECO" | "INSULATED";
+export interface CompanyDetail {
+  id: number;
+  name: string;
+  priceTierId: number | null;
+  priceTier: Named | null;
+  billingContactName: string;
+  billingContactEmail: string;
+  billingContactPhone: string;
+  ownerEmployee: Named | null;
+  workingDays: number[];
+  deliveryTime: string;
+  deliveryMinutes: number;
+  defaultPackaging: Packaging;
+  driverInstructions: string;
+  defaultDriver: Named | null;
+  domains: { id: number; domain: string }[];
+  addresses: Address[];
+  holidays: { id: number; date: string; name: string }[];
+  hiddenCategoryIds: number[];
+  hiddenDishIds: number[];
+}
+export interface EmployeeRow {
+  id: number;
+  email: string;
+  name: string;
+  active: boolean;
+  canChooseAddress: boolean;
+  canChangeTime: boolean;
+  canChangePackaging: boolean;
+  company: Named;
+  allergens: Named[];
+  dietaryTags: Named[];
+}
+
+// ---------- menu and orders ----------
+export interface MenuOption { optionId: number; name: string; priceCents: number; allergens: string[]; dietaryTags: string[] }
+export interface MenuGroup { groupId: number; name: string; required: boolean; options: MenuOption[] }
+export interface MenuDish {
+  dishId: number; sku: string; name: string; description: string; imageUrl: string | null;
+  temperature: "HOT" | "COLD"; priceCents: number; minOrderQty: number | null;
+  allergens: string[]; dietaryTags: string[]; groups: MenuGroup[];
+}
+export interface Menu {
+  tierId: number | null;
+  categories: { id: number; name: string; dishes: MenuDish[] }[];
+  secretDishes: MenuDish[];
+}
+export type OrderStatus = "DRAFT" | "PLACED" | "CONFIRMED" | "DELIVERED" | "CANCELLED" | "REJECTED";
+export interface OrderListItem {
+  id: number; status: OrderStatus; deliveryDate: string; deliveryTime: string;
+  company: Named; employee: Named; totalCents: number; invoiced: boolean; itemCount: number;
+}
+export interface OrderRequest {
+  employeeId: number; deliveryDate: string; deliveryTime?: string; addressId?: number; packaging?: Packaging;
+  status: "DRAFT" | "PLACED";
+  lines: { dishId: number; quantity: number; combinations: { quantity: number; selections: { groupId: number; optionId: number }[] }[] }[];
+}
+export interface OrderDetail {
+  id: number; status: OrderStatus; rejectionReason: string | null;
+  company: Named; employee: { id: number; name: string; email: string };
+  deliveryDate: string; deliveryTime: string; address: Address; packaging: Packaging;
+  cutoffAt: string; plannedDispatchReadyAt: string; plannedKitchenReadyAt: string;
+  kitchenStartedAt: string | null; kitchenReadyAt: string | null; dispatchReadyAt: string | null;
+  outForDeliveryAt: string | null; deliveredAt: string | null; onTime: boolean | null;
+  totalCents: number; invoiceId: number | null; dropId: number | null;
+  request: OrderRequest;
+  lines: {
+    id: number; dishId: number; dishName: string; sku: string; station: string | null; quantity: number; lineTotalCents: number;
+    combinations: { id: number; quantity: number; options: { groupName: string; optionName: string; portion: string | null; priceCents: number }[]; unitPriceCents: number; lineTotalCents: number }[];
+  }[];
+  timeline: { type: string; actor: string; at: string; meta: Record<string, unknown> | null }[];
+  warnings?: string[];
+}

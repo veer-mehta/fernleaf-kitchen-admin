@@ -24,6 +24,13 @@ export class StaffController {
     return this.staff.listRoles();
   }
 
+  // Dispatch and admin pick drivers from this list (company default driver, drop assignment).
+  @Get("drivers")
+  @RequirePermission(PERMISSIONS.COMPANIES_READ)
+  drivers() {
+    return this.staff.listDrivers();
+  }
+
   @Post("staff")
   @RequirePermission(PERMISSIONS.STAFF_WRITE)
   create(@Body() body: CreateStaffDto) {

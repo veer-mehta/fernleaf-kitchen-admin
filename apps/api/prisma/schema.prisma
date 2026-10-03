@@ -35,6 +35,7 @@ model RolePermission {
 
 model Staff {
   defaultForCompanies Company[] @relation("CompanyDefaultDriver")
+  drops               Drop[]    @relation("DropDriver")
   id                  Int       @id @default(autoincrement())
   email               String    @unique
   passwordHash        String
@@ -105,6 +106,7 @@ model Dish {
   categoryItems       CategoryItem[]
   prices              DishPrice[]
   companyHiddenDishes CompanyHiddenDish[]
+  orderLines          OrderLine[]
 }
 
 model DishAllergen {
@@ -314,6 +316,9 @@ model Company {
   hiddenCategories CompanyHiddenCategory[]
   hiddenDishes     CompanyHiddenDish[]
   employees        Employee[]              @relation("CompanyEmployees")
+  orders           Order[]
+  drops            Drop[]
+  invoices         Invoice[]
 }
 
 // Email domains a company claims. Unique across all companies.
@@ -334,6 +339,8 @@ model CompanyAddress {
   postalCode   String
   instructions String  @default("")
   company      Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  orders       Order[]
+  drops        Drop[]
 }
 
 model CompanyHoliday {
@@ -380,6 +387,7 @@ model Employee {
   allergens   EmployeeAllergen[]
   dietaryTags EmployeeDietaryTag[]
   ownerOf     Company?             @relation("CompanyOwner")
+  orders      Order[]
 }
 
 model EmployeeAllergen {
@@ -398,4 +406,190 @@ model EmployeeDietaryTag {
   dietaryTag   DietaryTag @relation(fields: [dietaryTagId], references: [id], onDelete: Restrict)
 
   @@id([employeeId, dietaryTagId])
+}
+
+// ---------- Platform settings ----------
+
+// One row per setting, e.g. key "cutoffTime" -> value "16:00". Missing rows use code defaults.
+model Setting {
+  key   String @id
+  value Json
+}
+
+// Days the kitchen is closed. Counted when working out order cut-offs.
+model KitchenHoliday {
+  id   Int      @id @default(autoincrement())
+  date DateTime @unique @db.Date
+  name String   @default("")
+}
+
+// ---------- Orders ----------
+
+enum OrderStatus {
+  DRAFT
+  PLACED
+  CONFIRMED
+  DELIVERED
+  CANCELLED
+  REJECTED
+}
+
+enum UnitStatus {
+  PENDING
+  STARTED
+  DONE
+}
+
+enum DropStatus {
+  OPEN
+  DISPATCH_READY
+  OUT_FOR_DELIVERY
+  DELIVERED
+}
+
+enum InvoiceStatus {
+  OPEN
+  PAID
+  VOID
+}
+
+// An order is placed by staff for ONE employee and billed to that employee's company AT THE TIME
+// of placing (companyId is copied, so moving the employee later never changes old orders).
+model Order {
+  id              Int            @id @default(autoincrement())
+  companyId       Int
+  company         Company        @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  employeeId      Int
+  employee        Employee       @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  deliveryDate    DateTime       @db.Date
+  deliveryTime    String // "HH:mm" in the kitchen zone
+  addressId       Int
+  address         CompanyAddress @relation(fields: [addressId], references: [id], onDelete: Restrict)
+  packaging       Packaging
+  status          OrderStatus    @default(DRAFT)
+  rejectionReason String?
+
+  // When this order locks (worked out from the kitchen calendar when the order is saved).
+  cutoffAt               DateTime
+  // Times the kitchen and dispatch must hit, worked back from the delivery time.
+  plannedDispatchReadyAt DateTime
+  plannedKitchenReadyAt  DateTime
+  // What actually happened.
+  kitchenStartedAt       DateTime?
+  kitchenReadyAt         DateTime?
+  dispatchReadyAt        DateTime?
+  outForDeliveryAt       DateTime?
+  deliveredAt            DateTime?
+  onTime                 Boolean?
+
+  totalCents Int // always the sum of its lines, worked out by the server
+  invoiceId  Int?
+  invoice    Invoice? @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  dropId     Int?
+  drop       Drop?    @relation(fields: [dropId], references: [id], onDelete: SetNull)
+
+  // The validated request that created or last edited the order. A draft is re-checked and
+  // re-priced from this when it is placed, so a stale draft can never carry old prices.
+  requestJson Json
+  isDemo      Boolean  @default(false) // seeded demo data (re-based each day)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  lines  OrderLine[]
+  events OrderEvent[]
+
+  @@index([deliveryDate, status])
+  @@index([companyId, status])
+}
+
+// One dish on an order. Names and station are COPIED here so later catalogue edits never rewrite history.
+model OrderLine {
+  id                  Int     @id @default(autoincrement())
+  orderId             Int
+  order               Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  dishId              Int
+  dish                Dish    @relation(fields: [dishId], references: [id], onDelete: Restrict)
+  dishNameSnapshot    String
+  skuSnapshot         String
+  stationIdSnapshot   Int? // plain number, no foreign key: stations may be edited freely
+  stationNameSnapshot String?
+  quantity            Int
+  displayOrder        Int     @default(0)
+
+  combinations OrderLineCombination[]
+}
+
+// "6 of this dish with brown rice". The kitchen cooks each combination as one unit.
+model OrderLineCombination {
+  id              Int       @id @default(autoincrement())
+  lineId          Int
+  line            OrderLine @relation(fields: [lineId], references: [id], onDelete: Cascade)
+  quantity        Int
+  // [{ groupName, optionName, portion, priceCents }] exactly as ordered and priced.
+  optionsSnapshot Json
+  unitPriceCents  Int // dish + options, for ONE
+  lineTotalCents  Int // unitPriceCents x quantity
+  displayOrder    Int       @default(0)
+
+  prepUnit PrepUnit?
+}
+
+// One thing for the kitchen to cook, created when the order is confirmed.
+model PrepUnit {
+  id            Int                  @id @default(autoincrement())
+  combinationId Int                  @unique
+  combination   OrderLineCombination @relation(fields: [combinationId], references: [id], onDelete: Cascade)
+  stationId     Int? // copy of the station at confirmation; null = "Unassigned"
+  status        UnitStatus           @default(PENDING)
+  startedAt     DateTime?
+  doneAt        DateTime?
+  version       Int                  @default(0) // counts changes, to see that only one of two racing clicks won
+
+  @@index([status])
+}
+
+// The timeline on the order page.
+model OrderEvent {
+  id      Int      @id @default(autoincrement())
+  orderId Int
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  type    String // CREATED, PLACED, EDITED, CONFIRMED, CANCELLED, ...
+  actor   String // a person's name, or "System"
+  at      DateTime @default(now())
+  meta    Json?
+
+  @@index([orderId])
+}
+
+// Orders for the same company, address and exact delivery time travel together.
+model Drop {
+  id           Int            @id @default(autoincrement())
+  companyId    Int
+  company      Company        @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  addressId    Int
+  address      CompanyAddress @relation(fields: [addressId], references: [id], onDelete: Restrict)
+  deliveryDate DateTime       @db.Date
+  deliveryTime String
+  driverId     Int?
+  driver       Staff?         @relation("DropDriver", fields: [driverId], references: [id], onDelete: SetNull)
+  status       DropStatus     @default(OPEN)
+  note         String? // driver's delivery note
+  photoUrl     String?
+  deliveredAt  DateTime?
+  orders       Order[]
+
+  @@unique([companyId, addressId, deliveryDate, deliveryTime])
+  @@index([deliveryDate])
+}
+
+model Invoice {
+  id         Int           @id @default(autoincrement())
+  companyId  Int
+  company    Company       @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  status     InvoiceStatus @default(OPEN)
+  totalCents Int
+  createdAt  DateTime      @default(now())
+  paidAt     DateTime?
+  isDemo     Boolean       @default(false)
+  orders     Order[]
 }
