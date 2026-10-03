@@ -111,3 +111,9 @@ export const UpdateAddressInput = z
     instructions: z.string().trim().max(500),
   })
   .partial();
+
+// The CSV text of an employee import. The browser reads the chosen file and sends its text. The limit
+// keeps one request within the server's default body size (about 1000 rows).
+export const EmployeeImportInput = z
+  .object({ csv: z.string().min(1, "Choose a file").max(90_000, "The file is too large. Split it into smaller files (about 1000 rows each).") })
+  .strict();

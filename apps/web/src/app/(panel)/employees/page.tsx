@@ -5,9 +5,10 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { PERMISSIONS } from "@fernleaf/shared";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { NativeSelect } from "@/components/native-select";
+import { EmployeeImport } from "@/components/employee-import";
 import { Pagination } from "@/components/pagination";
 import { apiGet } from "@/lib/api";
 import { useMe } from "@/lib/auth";
@@ -20,6 +21,7 @@ export default function EmployeesPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [companyId, setCompanyId] = useState("");
+  const [showImport, setShowImport] = useState(false);
   const { data: companies } = useQuery({ queryKey: ["companies", "all"], queryFn: () => apiGet<Paged<CompanyListItem>>("/companies?pageSize=100") });
 
   const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE) });
@@ -31,8 +33,14 @@ export default function EmployeesPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
         <h1 className="text-xl font-semibold">Employees</h1>
-        {can(PERMISSIONS.EMPLOYEES_WRITE) && <Link href="/employees/new" className={buttonVariants()}>New employee</Link>}
+        {can(PERMISSIONS.EMPLOYEES_WRITE) && (
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowImport(!showImport)}>{showImport ? "Close import" : "Import CSV"}</Button>
+            <Link href="/employees/new" className={buttonVariants()}>New employee</Link>
+          </div>
+        )}
       </div>
+      {showImport && <EmployeeImport defaultCompanyId={companyId} />}
       <div className="flex flex-wrap gap-2">
         <input
           className="h-9 w-56 rounded-md border border-input bg-background px-3 text-sm"
