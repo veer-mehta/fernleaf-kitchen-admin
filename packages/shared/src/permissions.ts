@@ -24,6 +24,7 @@ export const PERMISSIONS = {
   STAFF_READ: "staff:read",
   STAFF_WRITE: "staff:write",
   DASHBOARD_READ: "dashboard:read",
+  DASHBOARD_ADMIN: "dashboard:admin", // the admin dashboard: orders, billing and pricing gaps
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

@@ -3,10 +3,12 @@ import cookieParser from "cookie-parser";
 import { APP_FILTER, APP_PIPE } from "@nestjs/core";
 import { ZodValidationPipe } from "nestjs-zod";
 import { AuthModule } from "./auth/auth.module";
+import { BillingModule } from "./billing/billing.module";
 import { CatalogueModule } from "./catalogue/catalogue.module";
 import { CompaniesModule } from "./companies/companies.module";
 import { ClockModule } from "./common/clock";
 import { HttpExceptionFilter } from "./common/http-exception.filter";
+import { DashboardModule } from "./dashboard/dashboard.module";
 import { DispatchModule } from "./dispatch/dispatch.module";
 import { DriverModule } from "./driver/driver.module";
 import { EmployeesModule } from "./employees/employees.module";
@@ -21,7 +23,7 @@ import { SettingsModule } from "./settings/settings.module";
 import { StaffModule } from "./staff/staff.module";
 
 @Module({
-  imports: [PrismaModule, ClockModule, AuthModule, StaffModule, ReferenceModule, CatalogueModule, PricingModule, MenuModule, SettingsModule, CompaniesModule, EmployeesModule, OrdersModule, KitchenModule, DispatchModule, DriverModule],
+  imports: [PrismaModule, ClockModule, AuthModule, StaffModule, ReferenceModule, CatalogueModule, PricingModule, MenuModule, SettingsModule, CompaniesModule, EmployeesModule, OrdersModule, KitchenModule, DispatchModule, DriverModule, BillingModule, DashboardModule],
   controllers: [HealthController],
   providers: [
     // Registered as providers (not in main.ts) so e2e tests get them too.
