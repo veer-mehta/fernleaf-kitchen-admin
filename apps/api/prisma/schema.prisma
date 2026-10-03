@@ -34,12 +34,368 @@ model RolePermission {
 }
 
 model Staff {
-  id           Int      @id @default(autoincrement())
-  email        String   @unique
-  passwordHash String
+  defaultForCompanies Company[] @relation("CompanyDefaultDriver")
+  id                  Int       @id @default(autoincrement())
+  email               String    @unique
+  passwordHash        String
+  name                String
+  roleId              Int
+  role                Role      @relation(fields: [roleId], references: [id])
+  active              Boolean   @default(true)
+  createdAt           DateTime  @default(now())
+}
+
+// ---------- Reference data (admin-managed lists) ----------
+
+model Allergen {
+  id        Int                @id @default(autoincrement())
+  name      String             @unique
+  dishes    DishAllergen[]
+  options   OptionAllergen[]
+  employees EmployeeAllergen[]
+}
+
+model DietaryTag {
+  id        Int                  @id @default(autoincrement())
+  name      String               @unique
+  dishes    DishDietaryTag[]
+  options   OptionDietaryTag[]
+  employees EmployeeDietaryTag[]
+}
+
+model KitchenStation {
+  id     Int    @id @default(autoincrement())
+  name   String @unique
+  dishes Dish[]
+}
+
+model PortionSize {
+  id            Int             @id @default(autoincrement())
+  name          String          @unique // e.g. "Regular", "Large"
+  groupPortions GroupPortion[]
+  optionSizes   OptionPortion[]
+}
+
+// ---------- Catalogue ----------
+
+enum Temperature {
+  HOT
+  COLD
+}
+
+// Dishes are deactivated, never deleted: old orders point at them.
+model Dish {
+  id          Int             @id @default(autoincrement())
+  sku         String          @unique
+  name        String
+  description String          @default("")
+  imageUrl    String?
+  temperature Temperature
+  costCents   Int // what the dish costs the kitchen; tier prices are derived from it
+  stationId   Int?
+  station     KitchenStation? @relation(fields: [stationId], references: [id], onDelete: Restrict)
+  minOrderQty Int?
+  active      Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  allergens           DishAllergen[]
+  dietaryTags         DishDietaryTag[]
+  groups              OptionGroup[]
+  categoryItems       CategoryItem[]
+  prices              DishPrice[]
+  companyHiddenDishes CompanyHiddenDish[]
+}
+
+model DishAllergen {
+  dishId     Int
+  allergenId Int
+  dish       Dish     @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  allergen   Allergen @relation(fields: [allergenId], references: [id], onDelete: Restrict)
+
+  @@id([dishId, allergenId])
+}
+
+model DishDietaryTag {
+  dishId       Int
+  dietaryTagId Int
+  dish         Dish       @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  dietaryTag   DietaryTag @relation(fields: [dietaryTagId], references: [id], onDelete: Restrict)
+
+  @@id([dishId, dietaryTagId])
+}
+
+// A reusable choice (paneer, brown rice). Offered by dishes through option groups.
+model Option {
+  id        Int     @id @default(autoincrement())
+  name      String
+  costCents Int
+  active    Boolean @default(true)
+
+  allergens   OptionAllergen[]
+  dietaryTags OptionDietaryTag[]
+  groupItems  OptionGroupItem[]
+  portions    OptionPortion[]
+  prices      OptionPrice[]
+}
+
+model OptionAllergen {
+  optionId   Int
+  allergenId Int
+  option     Option   @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  allergen   Allergen @relation(fields: [allergenId], references: [id], onDelete: Restrict)
+
+  @@id([optionId, allergenId])
+}
+
+model OptionDietaryTag {
+  optionId     Int
+  dietaryTagId Int
+  option       Option     @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  dietaryTag   DietaryTag @relation(fields: [dietaryTagId], references: [id], onDelete: Restrict)
+
+  @@id([optionId, dietaryTagId])
+}
+
+// "Choose your protein": belongs to one dish, lists which options it offers, in order.
+model OptionGroup {
+  id           Int     @id @default(autoincrement())
+  dishId       Int
+  dish         Dish    @relation(fields: [dishId], references: [id], onDelete: Cascade)
   name         String
-  roleId       Int
-  role         Role     @relation(fields: [roleId], references: [id])
+  required     Boolean @default(false)
+  displayOrder Int     @default(0)
+  usesPortions Boolean @default(false) // [Should] portions
+
+  items    OptionGroupItem[]
+  portions GroupPortion[]
+}
+
+model OptionGroupItem {
+  groupId      Int
+  optionId     Int
+  displayOrder Int         @default(0)
+  group        OptionGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  option       Option      @relation(fields: [optionId], references: [id], onDelete: Restrict)
+
+  @@id([groupId, optionId])
+}
+
+// [Should] Portion sizes a group sells, with the extra charge on top of the option's own price.
+model GroupPortion {
+  groupId       Int
+  portionSizeId Int
+  extraCents    Int         @default(0)
+  group         OptionGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  portionSize   PortionSize @relation(fields: [portionSizeId], references: [id], onDelete: Restrict)
+
+  @@id([groupId, portionSizeId])
+}
+
+// [Should] Which portion sizes an option can be served in.
+model OptionPortion {
+  optionId      Int
+  portionSizeId Int
+  option        Option      @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  portionSize   PortionSize @relation(fields: [portionSizeId], references: [id], onDelete: Restrict)
+
+  @@id([optionId, portionSizeId])
+}
+
+// ---------- Menu structure ----------
+
+model Category {
+  id           Int                     @id @default(autoincrement())
+  name         String
+  displayOrder Int                     @default(0)
+  active       Boolean                 @default(true)
+  isSecret     Boolean                 @default(false) // not listed, but its dishes can still be ordered
+  items        CategoryItem[]
+  hiddenFor    CompanyHiddenCategory[]
+}
+
+model CategoryItem {
+  id           Int      @id @default(autoincrement())
+  categoryId   Int
+  dishId       Int
+  displayOrder Int      @default(0)
   active       Boolean  @default(true)
-  createdAt    DateTime @default(now())
+  category     Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  dish         Dish     @relation(fields: [dishId], references: [id], onDelete: Restrict)
+
+  @@unique([categoryId, dishId])
+}
+
+// ---------- Pricing ----------
+
+enum DerivationType {
+  NONE
+  COST_MULTIPLE // price = cost x multiplier, rounded up to 5 cents
+  TIER_PERCENT // price = another tier's price + percent, rounded up to 5 cents
+}
+
+model PriceTier {
+  id              Int            @id @default(autoincrement())
+  name            String         @unique
+  isDefault       Boolean        @default(false) // exactly one (enforced by a partial unique index)
+  derivationType  DerivationType @default(NONE)
+  multiplierMilli Int? // 2.4x is stored as 2400, so no floats
+  percentBp       Int? // 15% is stored as 1500 basis points
+  baseTierId      Int?
+  baseTier        PriceTier?     @relation("TierBase", fields: [baseTierId], references: [id], onDelete: Restrict)
+  derivedTiers    PriceTier[]    @relation("TierBase")
+
+  dishPrices   DishPrice[]
+  optionPrices OptionPrice[]
+  companies    Company[]
+}
+
+// One row = "this dish costs X cents on this tier". No row = not sold on that tier.
+// isOverride = a human typed this price, so automatic recalculation must not touch it.
+model DishPrice {
+  id         Int       @id @default(autoincrement())
+  tierId     Int
+  dishId     Int
+  cents      Int
+  isOverride Boolean   @default(false)
+  tier       PriceTier @relation(fields: [tierId], references: [id], onDelete: Cascade)
+  dish       Dish      @relation(fields: [dishId], references: [id], onDelete: Cascade)
+
+  @@unique([tierId, dishId])
+}
+
+model OptionPrice {
+  id         Int       @id @default(autoincrement())
+  tierId     Int
+  optionId   Int
+  cents      Int
+  isOverride Boolean   @default(false)
+  tier       PriceTier @relation(fields: [tierId], references: [id], onDelete: Cascade)
+  option     Option    @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  @@unique([tierId, optionId])
+}
+
+// ---------- Companies and employees ----------
+
+enum Packaging {
+  STANDARD
+  ECO
+  INSULATED
+}
+
+model Company {
+  id                  Int        @id @default(autoincrement())
+  name                String     @unique
+  priceTierId         Int? // null = use the default tier
+  priceTier           PriceTier? @relation(fields: [priceTierId], references: [id], onDelete: Restrict)
+  billingContactName  String     @default("")
+  billingContactEmail String     @default("")
+  billingContactPhone String     @default("")
+  ownerEmployeeId     Int?       @unique // one of the company's own employees
+  ownerEmployee       Employee?  @relation("CompanyOwner", fields: [ownerEmployeeId], references: [id], onDelete: SetNull)
+
+  // Calendar. ISO weekdays: 1 = Monday ... 7 = Sunday. Deliveries only on these days.
+  workingDays Int[] @default([1, 2, 3, 4, 5])
+
+  // Delivery defaults
+  deliveryTime       String    @default("13:00") // HH:mm in the kitchen time zone
+  deliveryMinutes    Int       @default(60) // how long before delivery the order must leave the kitchen
+  defaultPackaging   Packaging @default(STANDARD)
+  driverInstructions String    @default("")
+  defaultDriverId    Int?
+  defaultDriver      Staff?    @relation("CompanyDefaultDriver", fields: [defaultDriverId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  domains          CompanyDomain[]
+  addresses        CompanyAddress[]
+  holidays         CompanyHoliday[]
+  hiddenCategories CompanyHiddenCategory[]
+  hiddenDishes     CompanyHiddenDish[]
+  employees        Employee[]              @relation("CompanyEmployees")
+}
+
+// Email domains a company claims. Unique across all companies.
+model CompanyDomain {
+  id        Int     @id @default(autoincrement())
+  companyId Int
+  domain    String  @unique // stored lower-case
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model CompanyAddress {
+  id           Int     @id @default(autoincrement())
+  companyId    Int
+  label        String // "Head office"
+  line1        String
+  line2        String  @default("")
+  city         String
+  postalCode   String
+  instructions String  @default("")
+  company      Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model CompanyHoliday {
+  id        Int      @id @default(autoincrement())
+  companyId Int
+  date      DateTime @db.Date
+  name      String   @default("")
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, date])
+}
+
+model CompanyHiddenCategory {
+  companyId  Int
+  categoryId Int
+  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([companyId, categoryId])
+}
+
+model CompanyHiddenDish {
+  companyId Int
+  dishId    Int
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  dish      Dish    @relation(fields: [dishId], references: [id], onDelete: Cascade)
+
+  @@id([companyId, dishId])
+}
+
+// Every customer is an employee of exactly one company. Moving an employee changes which
+// rules apply from then on; existing orders keep the company they were placed under.
+model Employee {
+  id                 Int     @id @default(autoincrement())
+  companyId          Int
+  company            Company @relation("CompanyEmployees", fields: [companyId], references: [id], onDelete: Restrict)
+  email              String  @unique
+  name               String
+  active             Boolean @default(true)
+  canChooseAddress   Boolean @default(false)
+  canChangeTime      Boolean @default(false)
+  canChangePackaging Boolean @default(false)
+
+  allergens   EmployeeAllergen[]
+  dietaryTags EmployeeDietaryTag[]
+  ownerOf     Company?             @relation("CompanyOwner")
+}
+
+model EmployeeAllergen {
+  employeeId Int
+  allergenId Int
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  allergen   Allergen @relation(fields: [allergenId], references: [id], onDelete: Restrict)
+
+  @@id([employeeId, allergenId])
+}
+
+model EmployeeDietaryTag {
+  employeeId   Int
+  dietaryTagId Int
+  employee     Employee   @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  dietaryTag   DietaryTag @relation(fields: [dietaryTagId], references: [id], onDelete: Restrict)
+
+  @@id([employeeId, dietaryTagId])
 }

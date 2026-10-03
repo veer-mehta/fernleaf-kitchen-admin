@@ -20,6 +20,11 @@ describe("account isolation (e2e)", () => {
   const rules: ["get" | "post", string, string[]][] = [
     ["get", "/staff", ["admin@test.com"]],
     ["get", "/roles", ["admin@test.com"]],
+    ["get", "/tiers", ["admin@test.com"]],
+    ["get", "/dishes", ["admin@test.com", "kitchen@test.com"]],
+    ["get", "/options", ["admin@test.com", "kitchen@test.com"]],
+    ["get", "/categories", ["admin@test.com", "kitchen@test.com"]],
+    ["get", "/reference/allergens", ["admin@test.com", "kitchen@test.com"]],
   ];
   const accounts = ["admin@test.com", "kitchen@test.com", "dispatch@test.com", "driver@test.com"];
 

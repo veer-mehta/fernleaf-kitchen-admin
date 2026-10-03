@@ -9,5 +9,10 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { label: "Home", href: "/" },
+  { label: "Dishes", href: "/catalogue/dishes", permission: PERMISSIONS.CATALOGUE_READ },
+  { label: "Options", href: "/catalogue/options", permission: PERMISSIONS.CATALOGUE_READ },
+  { label: "Categories", href: "/catalogue/categories", permission: PERMISSIONS.CATALOGUE_READ },
+  { label: "Lists", href: "/catalogue/reference", permission: PERMISSIONS.CATALOGUE_READ },
+  { label: "Pricing", href: "/pricing", permission: PERMISSIONS.PRICING_READ },
   { label: "Staff", href: "/staff", permission: PERMISSIONS.STAFF_READ },
 ];
