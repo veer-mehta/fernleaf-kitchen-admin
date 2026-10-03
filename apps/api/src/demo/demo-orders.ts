@@ -57,6 +57,8 @@ type PlannedLine = {
 };
 type Stage = "DELIVERED" | "OUT_FOR_DELIVERY" | "DISPATCH_READY" | "KITCHEN_READY" | "COOKING_PARTIAL" | "COOKING_NONE";
 
+export const DEMO_MARKER_KEY = "demo.rebasedOn";
+
 export async function rebaseDemoOrders(prisma: PrismaClient, now: Date): Promise<DemoSummary> {
   let settings = await loadKitchenSettings(prisma);
   const today = kitchenToday(now, settings.timezone);
@@ -332,5 +334,8 @@ export async function rebaseDemoOrders(prisma: PrismaClient, now: Date): Promise
 
   const byStatus: Record<string, number> = {};
   for (const { order } of created) byStatus[order.status] = (byStatus[order.status] ?? 0) + 1;
+  // Remember which day this was built for. The orders for the coming week already exist as plain future
+  // work, so "are there demo orders for today?" cannot tell whether today has been built yet.
+  await prisma.setting.upsert({ where: { key: DEMO_MARKER_KEY }, create: { key: DEMO_MARKER_KEY, value: today }, update: { value: today } });
   return { today, orders: created.length, byStatus, drops: dropIds.size, invoices };
 }

@@ -294,6 +294,33 @@ describe("demo data (e2e)", () => {
       expect(await service.ensureToday()).not.toBeNull();
     });
 
+    it("ensureToday re-bases on the very next day, even though the last refresh already created orders for that day", async () => {
+      clock.set(WEDNESDAY);
+      const service = app.get(DemoService);
+      await service.ensureToday();
+      // the refresh above made orders for Thursday as plain future work; none of it had progressed
+      const thursday = "2026-10-08";
+      expect(await prisma.drop.count({ where: { deliveryDate: new Date(`${thursday}T00:00:00Z`), status: { not: "OPEN" } } })).toBe(0);
+
+      clock.set("2026-10-08T01:00:00+05:30"); // the nightly job on Thursday
+      const rebuilt = await service.ensureToday();
+      expect(rebuilt).not.toBeNull();
+      expect(rebuilt!.today).toBe(thursday);
+      // Thursday is now "today": some drops are delivered, some out, and so on
+      const drops = await prisma.drop.findMany({ where: { deliveryDate: new Date(`${thursday}T00:00:00Z`) } });
+      expect(drops.some((d) => d.status === "DELIVERED")).toBe(true);
+      expect(drops.some((d) => d.status === "OUT_FOR_DELIVERY")).toBe(true);
+
+      expect(await service.ensureToday()).toBeNull(); // and only once per day
+    });
+
+    it("pressing the admin button counts as the day's refresh", async () => {
+      clock.set(WEDNESDAY);
+      const admin = await loginAs(app, "admin@test.com");
+      await admin.post("/demo/refresh");
+      expect(await app.get(DemoService).ensureToday()).toBeNull();
+    });
+
     it("POST /demo/refresh is for admin only and returns what it built", async () => {
       clock.set(WEDNESDAY);
       const admin = await loginAs(app, "admin@test.com");

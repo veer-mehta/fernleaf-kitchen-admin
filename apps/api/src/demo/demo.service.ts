@@ -1,11 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { Clock } from "../common/clock";
-import { fromDateString } from "../common/dates";
 import { PrismaService } from "../prisma/prisma.service";
 import { loadKitchenSettings } from "../settings/load-settings";
 import { kitchenToday } from "@fernleaf/shared";
 import { seedDemoCatalogue } from "./demo-catalogue";
-import { DemoSummary, rebaseDemoOrders } from "./demo-orders";
+import { DEMO_MARKER_KEY, DemoSummary, rebaseDemoOrders } from "./demo-orders";
 
 @Injectable()
 export class DemoService {
@@ -21,11 +20,13 @@ export class DemoService {
     return rebaseDemoOrders(this.prisma, this.clock.now());
   }
 
-  // Runs refresh() only when the review day has no demo orders yet, e.g. the first start on a new day.
+  // Runs refresh() once per kitchen day, e.g. the first start on a new day or the nightly job. It goes by the
+  // day recorded after the last refresh, not by whether demo orders exist for today: yesterday's refresh already
+  // created next week's orders, but only as untouched future work, so today still needs building.
   async ensureToday(): Promise<DemoSummary | null> {
     const settings = await loadKitchenSettings(this.prisma);
     const today = kitchenToday(this.clock.now(), settings.timezone);
-    const hasToday = await this.prisma.order.count({ where: { isDemo: true, deliveryDate: fromDateString(today) } });
-    return hasToday > 0 ? null : this.refresh();
+    const last = await this.prisma.setting.findUnique({ where: { key: DEMO_MARKER_KEY } });
+    return last?.value === today ? null : this.refresh();
   }
 }
