@@ -1,5 +1,6 @@
 import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
 import cookieParser from "cookie-parser";
+import helmet from "helmet";
 import { APP_FILTER, APP_PIPE } from "@nestjs/core";
 import { ZodValidationPipe } from "nestjs-zod";
 import { AuthModule } from "./auth/auth.module";
@@ -7,6 +8,7 @@ import { BillingModule } from "./billing/billing.module";
 import { CatalogueModule } from "./catalogue/catalogue.module";
 import { CompaniesModule } from "./companies/companies.module";
 import { ClockModule } from "./common/clock";
+import { originCheck } from "./common/origin-check";
 import { HttpExceptionFilter } from "./common/http-exception.filter";
 import { DashboardModule } from "./dashboard/dashboard.module";
 import { DemoModule } from "./demo/demo.module";
@@ -35,6 +37,6 @@ import { StaffModule } from "./staff/staff.module";
 export class AppModule implements NestModule {
   // Registered here, not in main.ts, so the e2e tests run with exactly the same middleware.
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(cookieParser()).forRoutes("*path");
+    consumer.apply(helmet(), originCheck, cookieParser()).forRoutes("*path");
   }
 }
