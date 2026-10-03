@@ -11,3 +11,5 @@ export * from "./categories";
 export * from "./settings";
 export * from "./companies";
 export * from "./orders";
+export * from "./kitchen";
+export * from "./dispatch";

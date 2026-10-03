@@ -50,6 +50,9 @@ export function OrderActions({ order }: { order: OrderDetail }) {
         <div className="flex flex-wrap gap-2">
           {canWrite && editable && <Link href={`/orders/${order.id}/edit`} className={buttonVariants({ variant: "outline" })}>Edit dishes</Link>}
           {canWrite && status === "DRAFT" && <Button onClick={() => act.mutate({ path: "place" })} disabled={act.isPending}>Place order</Button>}
+          {canOverride && status === "CONFIRMED" && !order.kitchenReadyAt && (
+            <Button variant="outline" onClick={() => act.mutate({ path: "force-complete" })} disabled={act.isPending}>Complete in kitchen</Button>
+          )}
           {canOverride && (status === "PLACED" || status === "CONFIRMED") && (
             <Button variant="outline" onClick={() => setShowOverride(!showOverride)}>Change delivery details</Button>
           )}
