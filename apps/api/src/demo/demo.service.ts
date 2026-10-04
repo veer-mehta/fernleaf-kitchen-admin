@@ -20,7 +20,7 @@ export class DemoService {
     return rebaseDemoOrders(this.prisma, this.clock.now());
   }
 
-  // Runs refresh() once per kitchen day, e.g. the first start on a new day or the nightly job. It goes by the
+  // Runs refresh() once per kitchen day, e.g. the first start on a new day or the first hourly check after midnight. It goes by the
   // day recorded after the last refresh, not by whether demo orders exist for today: yesterday's refresh already
   // created next week's orders, but only as untouched future work, so today still needs building.
   async ensureToday(): Promise<DemoSummary | null> {

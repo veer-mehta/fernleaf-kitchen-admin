@@ -302,7 +302,7 @@ describe("demo data (e2e)", () => {
       const thursday = "2026-10-08";
       expect(await prisma.drop.count({ where: { deliveryDate: new Date(`${thursday}T00:00:00Z`), status: { not: "OPEN" } } })).toBe(0);
 
-      clock.set("2026-10-08T01:00:00+05:30"); // the nightly job on Thursday
+      clock.set("2026-10-08T01:00:00+05:30"); // the first check on Thursday
       const rebuilt = await service.ensureToday();
       expect(rebuilt).not.toBeNull();
       expect(rebuilt!.today).toBe(thursday);

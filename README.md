@@ -23,7 +23,7 @@ pnpm dev                        # API :4000, web :3000
 
 `pnpm lint`, `pnpm typecheck`, `pnpm test`. Tests use a separate database; run `pnpm --filter api db:test` once to create it.
 
-The seed creates the four role accounts from the brief and generates demo orders around today's date, so every screen has data on any day. Demo orders are re-based when the API starts on a new day, nightly, and from Settings → Refresh demo data; orders created by hand are never touched.
+The seed creates the four role accounts from the brief and generates demo orders around today's date, so every screen has data on any day. Demo orders are re-based on the first start or hourly check of each new day, and from Settings → Refresh demo data; orders created by hand are never touched.
 
 ## Architecture
 
@@ -148,7 +148,5 @@ Each role lands on its own dashboard, and each figure is defined on the page too
 ## Scope
 
 Built: every [Must] item (4.1-4.11) and both [Should] items, portion sizes and CSV employee import with row-level errors. Tests cover cut-off, pricing resolution, combination counting, invoicing, kitchen concurrency, access control, dispatch, photo upload and CSV import.
-
-Skipped: nothing from section 4. The brief's out-of-scope items were left out.
 
 Next: CSV import for companies and dishes, full-text search and cursor pagination for large lists, live board updates instead of polling, and browser end-to-end tests.
