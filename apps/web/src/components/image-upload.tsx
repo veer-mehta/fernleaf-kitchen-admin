@@ -14,9 +14,11 @@ interface Props {
   capture?: "environment";
   error?: string;
   className?: string;
+  // One tidy row (preview + button) without the label line, for tight spaces such as a board card.
+  compact?: boolean;
 }
 
-export function ImageUpload({ label, value, onChange, capture, error, className }: Props) {
+export function ImageUpload({ label, value, onChange, capture, error, className, compact }: Props) {
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | undefined>();
@@ -37,17 +39,17 @@ export function ImageUpload({ label, value, onChange, capture, error, className 
   }
 
   return (
-    <div className={`space-y-1.5 ${className ?? ""}`}>
-      <p className="text-sm font-medium">{label}</p>
+    <div className={`${compact ? "space-y-1" : "space-y-1.5"} ${className ?? ""}`}>
+      {!compact && <p className="text-sm font-medium">{label}</p>}
       <div className="flex items-center gap-3">
         {/* eslint-disable-next-line @next/next/no-img-element -- a stored photo, already shrunk before upload */}
         {src && <img src={src} alt={label} className="h-16 w-16 rounded border object-cover" />}
         <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/*" capture={capture} className="hidden" aria-label={label} onChange={(e) => pick(e.target.files?.[0])} />
-        <Button type="button" variant="outline" className="h-11" disabled={busy} onClick={() => input.current?.click()}>
+        <Button type="button" variant="outline" className={capture ? "h-11" : ""} disabled={busy} onClick={() => input.current?.click()}>
           {busy ? "Uploading…" : src ? "Change photo" : "Add photo"}
         </Button>
         {src && !busy && (
-          <Button type="button" variant="ghost" className="h-11" onClick={() => onChange("")}>Remove</Button>
+          <Button type="button" variant="ghost" className={capture ? "h-11" : ""} onClick={() => onChange("")}>Remove</Button>
         )}
       </div>
       {(problem ?? error) && <p className="text-sm text-destructive">{problem ?? error}</p>}

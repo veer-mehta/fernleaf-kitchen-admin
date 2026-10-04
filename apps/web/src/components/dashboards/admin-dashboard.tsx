@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { formatCents } from "@fernleaf/shared";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { apiGet } from "@/lib/api";
@@ -21,9 +22,9 @@ export function AdminDashboardView() {
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader className="flex-row flex-wrap items-center gap-3">
+        <CardHeader className="flex flex-row flex-wrap items-center gap-3">
           <CardTitle className="text-base">Orders for {formatDate(data.date)}</CardTitle>
-          <input type="date" aria-label="Delivery date" className="h-8 rounded-md border border-input bg-background px-2 text-sm" value={date} onChange={(e) => setDate(e.target.value)} />
+          <Input type="date" aria-label="Delivery date" className="w-44" value={date} onChange={(e) => setDate(e.target.value)} />
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-xs text-muted-foreground">Orders whose <b>delivery date</b> is this day, counted by their current status. “Active” = every status except cancelled and rejected (drafts included); its value is the sum of those orders’ totals.</p>

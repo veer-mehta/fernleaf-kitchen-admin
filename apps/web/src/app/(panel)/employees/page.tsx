@@ -4,46 +4,48 @@ import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { PERMISSIONS } from "@fernleaf/shared";
+import { Input } from "@/components/ui/input";
+import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { NativeSelect } from "@/components/native-select";
 import { EmployeeImport } from "@/components/employee-import";
 import { Pagination } from "@/components/pagination";
+import { usePageSize } from "@/lib/use-page-size";
 import { apiGet } from "@/lib/api";
 import { useMe } from "@/lib/auth";
 import type { CompanyListItem, EmployeeRow, Paged } from "@/lib/types";
 
-const PAGE_SIZE = 10;
 
 export default function EmployeesPage() {
   const { can } = useMe();
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = usePageSize("employees");
   const [search, setSearch] = useState("");
   const [companyId, setCompanyId] = useState("");
   const [showImport, setShowImport] = useState(false);
   const { data: companies } = useQuery({ queryKey: ["companies", "all"], queryFn: () => apiGet<Paged<CompanyListItem>>("/companies?pageSize=100") });
 
-  const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE) });
+  const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
   if (search) params.set("search", search);
   if (companyId) params.set("companyId", companyId);
   const { data } = useQuery({ queryKey: ["employees", params.toString()], queryFn: () => apiGet<Paged<EmployeeRow>>(`/employees?${params}`) });
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <h1 className="text-xl font-semibold">Employees</h1>
-        {can(PERMISSIONS.EMPLOYEES_WRITE) && (
+    <div className="space-y-6">
+      <PageHeader title="Employees"
+        actions={<>{can(PERMISSIONS.EMPLOYEES_WRITE) && (
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setShowImport(!showImport)}>{showImport ? "Close import" : "Import CSV"}</Button>
             <Link href="/employees/new" className={buttonVariants()}>New employee</Link>
           </div>
-        )}
-      </div>
+        )}</>}
+      />
       {showImport && <EmployeeImport defaultCompanyId={companyId} />}
       <div className="flex flex-wrap gap-2">
-        <input
-          className="h-9 w-56 rounded-md border border-input bg-background px-3 text-sm"
+        <Input
+          className="w-56"
           placeholder="Search name or email"
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
@@ -70,7 +72,7 @@ export default function EmployeesPage() {
           {data?.items.length === 0 && <TableRow><TableCell colSpan={5} className="text-muted-foreground">No employees found.</TableCell></TableRow>}
         </TableBody>
       </Table>
-      <Pagination page={page} pageSize={PAGE_SIZE} total={data?.total ?? 0} onPage={setPage} />
+      <Pagination page={page} pageSize={pageSize} onPageSize={(n) => { setPageSize(n); setPage(1); }} total={data?.total ?? 0} onPage={setPage} />
     </div>
   );
 }

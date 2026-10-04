@@ -3,10 +3,7 @@ export interface Named {
   id: number;
   name: string;
 }
-export interface Paged<T> {
-  items: T[];
-  total: number;
-}
+export type { Paged } from "@fernleaf/shared";
 export interface DishListItem {
   id: number;
   sku: string;

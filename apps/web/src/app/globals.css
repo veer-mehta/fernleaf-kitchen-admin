@@ -2,6 +2,10 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css"; /* custom variants (data-open, data-checked...) the UI components use */
 
+/* The app has no dark theme. Without this, Tailwind applies every dark: style whenever the visitor's
+   operating system is in dark mode, which greys out inputs, selects and checkboxes on a light page. */
+@custom-variant dark (&:is(.dark *));
+
 /* Light theme only: the admin panel is used in offices, and one theme keeps the design simple. */
 :root {
   color-scheme: light;

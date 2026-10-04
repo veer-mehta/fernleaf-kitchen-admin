@@ -9,6 +9,7 @@ export async function loadKitchenSettings(prisma: PrismaClient): Promise<Kitchen
     prisma.setting.findMany(),
     prisma.kitchenHoliday.findMany({ orderBy: { date: "asc" } }),
   ]);
-  const saved = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+  // Only known settings: the table also holds bookkeeping rows (such as the demo data marker).
+  const saved = Object.fromEntries(rows.filter((r) => r.key in DEFAULT_SETTINGS).map((r) => [r.key, r.value]));
   return { ...DEFAULT_SETTINGS, ...saved, holidays: holidays.map((h) => toDateString(h.date)) };
 }

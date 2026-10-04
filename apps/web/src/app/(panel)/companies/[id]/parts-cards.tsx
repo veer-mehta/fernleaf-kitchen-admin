@@ -38,14 +38,17 @@ export function DomainsCard({ company, canEdit }: { company: CompanyDetail; canE
           {company.domains.map((d) => (
             <li key={d.id} className="flex items-center gap-2">
               <span className="flex-1">{d.domain}</span>
-              {canEdit && <Button size="sm" variant="ghost" onClick={() => remove.mutate(d.id)}>Remove</Button>}
+              {canEdit && <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => remove.mutate(d.id)}>Remove</Button>}
             </li>
           ))}
         </ul>
         {canEdit && (
-          <form className="flex max-w-sm gap-2" onSubmit={(e) => { e.preventDefault(); add.mutate(); }}>
-            <div className="flex-1"><FormField name="domain" label="" placeholder="acme.com" aria-label="New domain" value={domain} onChange={(e) => setDomain(e.target.value)} errors={errors} /></div>
-            <Button type="submit" className="self-start" disabled={!domain.trim()}>Add</Button>
+          <form className="max-w-md space-y-1.5" onSubmit={(e) => { e.preventDefault(); add.mutate(); }}>
+            <div className="flex gap-2">
+              <Input placeholder="acme.com" aria-label="New domain" aria-invalid={!!errors?.domain} value={domain} onChange={(e) => setDomain(e.target.value)} />
+              <Button type="submit" disabled={!domain.trim()}>Add</Button>
+            </div>
+            {errors?.domain && <p className="text-sm text-destructive">{errors.domain}</p>}
           </form>
         )}
       </CardContent>
@@ -72,17 +75,17 @@ export function AddressesCard({ company, canEdit }: { company: CompanyDetail; ca
           {company.addresses.map((a, i) => (
             <li key={a.id} className="flex items-center gap-2">
               <span className="flex-1"><b>{a.label}</b>{i === 0 && " (default)"} · {a.line1}, {a.city} {a.postalCode}</span>
-              {canEdit && <Button size="sm" variant="ghost" onClick={() => remove.mutate(a.id)}>Remove</Button>}
+              {canEdit && <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => remove.mutate(a.id)}>Remove</Button>}
             </li>
           ))}
         </ul>
         {canEdit && (
-          <form className="grid gap-2 md:grid-cols-5" onSubmit={(e) => { e.preventDefault(); add.mutate(); }}>
+          <form className="grid items-end gap-3 md:grid-cols-[1fr_1.5fr_1fr_1fr_auto]" onSubmit={(e) => { e.preventDefault(); add.mutate(); }}>
             <FormField name="label" label="Name" value={draft.label} onChange={(e) => setDraft({ ...draft, label: e.target.value })} errors={errors} />
             <FormField name="line1" label="Address line" value={draft.line1} onChange={(e) => setDraft({ ...draft, line1: e.target.value })} errors={errors} />
             <FormField name="city" label="City" value={draft.city} onChange={(e) => setDraft({ ...draft, city: e.target.value })} errors={errors} />
             <FormField name="postalCode" label="Postal code" value={draft.postalCode} onChange={(e) => setDraft({ ...draft, postalCode: e.target.value })} errors={errors} />
-            <Button type="submit" className="self-end">Add address</Button>
+            <Button type="submit">Add address</Button>
           </form>
         )}
       </CardContent>
@@ -110,16 +113,19 @@ export function HolidaysCard({ company, canEdit }: { company: CompanyDetail; can
           {company.holidays.map((h) => (
             <li key={h.id} className="flex items-center gap-2">
               <span className="flex-1">{formatDate(h.date)} {h.name && `· ${h.name}`}</span>
-              {canEdit && <Button size="sm" variant="ghost" onClick={() => remove.mutate(h.id)}>Remove</Button>}
+              {canEdit && <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => remove.mutate(h.id)}>Remove</Button>}
             </li>
           ))}
           {company.holidays.length === 0 && <li className="text-muted-foreground">None.</li>}
         </ul>
         {canEdit && (
-          <form className="flex flex-wrap items-start gap-2" onSubmit={(e) => { e.preventDefault(); add.mutate(); }}>
-            <div className="w-44"><FormField name="date" label="" type="date" aria-label="Holiday date" value={date} onChange={(e) => setDate(e.target.value)} errors={errors} /></div>
-            <Input className="w-56" placeholder="Name (optional)" aria-label="Holiday name" value={name} onChange={(e) => setName(e.target.value)} />
-            <Button type="submit" disabled={!date}>Add holiday</Button>
+          <form className="space-y-1.5" onSubmit={(e) => { e.preventDefault(); add.mutate(); }}>
+            <div className="flex flex-wrap items-center gap-2">
+              <Input type="date" className="w-44" aria-label="Holiday date" aria-invalid={!!errors?.date} value={date} onChange={(e) => setDate(e.target.value)} />
+              <Input className="w-56" placeholder="Name (optional)" aria-label="Holiday name" value={name} onChange={(e) => setName(e.target.value)} />
+              <Button type="submit" disabled={!date}>Add holiday</Button>
+            </div>
+            {errors?.date && <p className="text-sm text-destructive">{errors.date}</p>}
           </form>
         )}
       </CardContent>

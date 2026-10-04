@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { formatCents } from "@fernleaf/shared";
+import { X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { IconButton } from "@/components/icon-button";
+import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NativeSelect } from "@/components/native-select";
@@ -151,8 +155,8 @@ export function OrderBuilder({ existing }: { existing?: OrderDetail }) {
     : [];
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-semibold">{existing ? `Edit order #${existing.id}` : "New order"}</h1>
+    <div className="space-y-6">
+      <PageHeader title={existing ? `Edit order #${existing.id}` : "New order"} />
 
       {problems.length > 0 && (
         <div role="alert" className="rounded-md border border-destructive p-3 text-sm text-destructive">
@@ -180,7 +184,7 @@ export function OrderBuilder({ existing }: { existing?: OrderDetail }) {
           </div>
           <div className="space-y-1.5">
             <label className="text-sm font-medium" htmlFor="deliveryDate">Delivery date</label>
-            <input id="deliveryDate" type="date" className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} />
+            <Input id="deliveryDate" type="date" className="w-full" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} />
             {deliveryDate && <p className="text-xs text-muted-foreground">{formatDate(deliveryDate)}</p>}
           </div>
           {employee && (employee.allergens.length > 0 || employee.dietaryTags.length > 0) && (
@@ -207,14 +211,14 @@ export function OrderBuilder({ existing }: { existing?: OrderDetail }) {
                   <div className="flex flex-wrap items-center gap-2">
                     <b className="flex-1">{dish.name} <span className="font-normal text-muted-foreground">{formatCents(dish.priceCents)} each{dish.minOrderQty ? ` · min ${dish.minOrderQty}` : ""}</span></b>
                     <label className="flex items-center gap-1.5 text-sm">Quantity
-                      <input aria-label={`Quantity of ${dish.name}`} inputMode="numeric" className="h-8 w-20 rounded-md border border-input bg-background px-2" value={line.quantity} onChange={(e) => setLineQuantity(line, e.target.value)} />
+                      <Input aria-label={`Quantity of ${dish.name}`} inputMode="numeric" className="w-20" value={line.quantity} onChange={(e) => setLineQuantity(line, e.target.value)} />
                     </label>
-                    <Button size="sm" variant="ghost" onClick={() => setLines(lines.filter((l) => l.key !== line.key))}>Remove</Button>
+                    <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setLines(lines.filter((l) => l.key !== line.key))}>Remove</Button>
                   </div>
                   {line.combos.map((combo, ci) => (
                     <div key={combo.key} className="flex flex-wrap items-center gap-2 rounded bg-muted/50 p-2 text-sm">
                       <span className="text-muted-foreground">#{ci + 1}</span>
-                      <input aria-label={`Quantity of combination ${ci + 1} of ${dish.name}`} inputMode="numeric" className="h-8 w-16 rounded-md border border-input bg-background px-2" value={combo.quantity} onChange={(e) => updateCombo(line, combo.key, { quantity: e.target.value })} />
+                      <Input aria-label={`Quantity of combination ${ci + 1} of ${dish.name}`} inputMode="numeric" className="w-16" value={combo.quantity} onChange={(e) => updateCombo(line, combo.key, { quantity: e.target.value })} />
                       <span>with</span>
                       {dish.groups.length === 0 && <span className="text-muted-foreground">no choices</span>}
                       {dish.groups.map((g) => (
@@ -233,7 +237,7 @@ export function OrderBuilder({ existing }: { existing?: OrderDetail }) {
                         </span>
                       ))}
                       <span className="ml-auto font-medium">{formatCents(comboTotal(dish, combo))}</span>
-                      {line.combos.length > 1 && <Button size="sm" variant="ghost" onClick={() => updateLine(line.key, { combos: line.combos.filter((c) => c.key !== combo.key) })}>✕</Button>}
+                      {line.combos.length > 1 && <IconButton label="Remove this combination" icon={X} onClick={() => updateLine(line.key, { combos: line.combos.filter((c) => c.key !== combo.key) })} />}
                     </div>
                   ))}
                   <div className="flex items-center gap-3 text-sm">
@@ -272,7 +276,7 @@ export function OrderBuilder({ existing }: { existing?: OrderDetail }) {
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium" htmlFor="time">Delivery time</label>
-              <input id="time" type="time" disabled={!employee?.canChangeTime} className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm disabled:opacity-60" value={time || company.deliveryTime} onChange={(e) => setTime(e.target.value === company.deliveryTime ? "" : e.target.value)} />
+              <Input id="time" type="time" disabled={!employee?.canChangeTime} className="w-full disabled:opacity-60" value={time || company.deliveryTime} onChange={(e) => setTime(e.target.value === company.deliveryTime ? "" : e.target.value)} />
               {!employee?.canChangeTime && <p className="text-xs text-muted-foreground">This employee cannot change the time.</p>}
             </div>
             <div className="space-y-1.5">

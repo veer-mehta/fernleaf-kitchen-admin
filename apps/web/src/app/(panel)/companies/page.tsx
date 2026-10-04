@@ -4,31 +4,33 @@ import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { PERMISSIONS } from "@fernleaf/shared";
+import { Input } from "@/components/ui/input";
+import { PageHeader } from "@/components/page-header";
 import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pagination } from "@/components/pagination";
+import { usePageSize } from "@/lib/use-page-size";
 import { apiGet } from "@/lib/api";
 import { useMe } from "@/lib/auth";
 import type { CompanyListItem, Paged } from "@/lib/types";
 
-const PAGE_SIZE = 10;
 
 export default function CompaniesPage() {
   const { can } = useMe();
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = usePageSize("companies");
   const [search, setSearch] = useState("");
-  const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE), ...(search ? { search } : {}) });
+  const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize), ...(search ? { search } : {}) });
   const { data } = useQuery({ queryKey: ["companies", params.toString()], queryFn: () => apiGet<Paged<CompanyListItem>>(`/companies?${params}`) });
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <h1 className="text-xl font-semibold">Companies</h1>
-        {can(PERMISSIONS.COMPANIES_WRITE) && <Link href="/companies/new" className={buttonVariants()}>New company</Link>}
-      </div>
-      <input
-        className="h-9 w-full max-w-xs rounded-md border border-input bg-background px-3 text-sm"
+    <div className="space-y-6">
+      <PageHeader title="Companies"
+        actions={<>{can(PERMISSIONS.COMPANIES_WRITE) && <Link href="/companies/new" className={buttonVariants()}>New company</Link>}</>}
+      />
+      <Input
+        className="max-w-xs"
         placeholder="Search companies"
         value={search}
         onChange={(e) => { setSearch(e.target.value); setPage(1); }}
@@ -39,7 +41,7 @@ export default function CompaniesPage() {
           {data?.items.map((c) => (
             <TableRow key={c.id}>
               <TableCell><Link className="underline" href={`/companies/${c.id}`}>{c.name}</Link></TableCell>
-              <TableCell>{c.tier ? <Badge variant="secondary">{c.tier.name}</Badge> : <span className="text-muted-foreground">Default</span>}</TableCell>
+              <TableCell>{c.tier ? <Badge variant="secondary">{c.tier.name}</Badge> : <Badge variant="outline">Default</Badge>}</TableCell>
               <TableCell>{c.domains.join(", ")}</TableCell>
               <TableCell>{c.employeeCount}</TableCell>
             </TableRow>
@@ -47,7 +49,7 @@ export default function CompaniesPage() {
           {data?.items.length === 0 && <TableRow><TableCell colSpan={4} className="text-muted-foreground">No companies found.</TableCell></TableRow>}
         </TableBody>
       </Table>
-      <Pagination page={page} pageSize={PAGE_SIZE} total={data?.total ?? 0} onPage={setPage} />
+      <Pagination page={page} pageSize={pageSize} onPageSize={(n) => { setPageSize(n); setPage(1); }} total={data?.total ?? 0} onPage={setPage} />
     </div>
   );
 }

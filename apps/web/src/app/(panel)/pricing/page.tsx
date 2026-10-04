@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { PERMISSIONS, formatCents, formatScaled } from "@fernleaf/shared";
+import { PageHeader } from "@/components/page-header";
+import { CheckboxField } from "@/components/checkbox-field";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -58,7 +60,7 @@ function TierDetail({ tier, tiers, canEdit }: { tier: Tier; tiers: Tier[]; canEd
   const options = (grid?.options ?? []).filter((o) => !onlyMissing || o.priceCents === null);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-2">
         <h2 className="text-lg font-semibold">{tier.name}</h2>
         {tier.isDefault && <Badge>Default</Badge>}
@@ -72,18 +74,18 @@ function TierDetail({ tier, tiers, canEdit }: { tier: Tier; tiers: Tier[]; canEd
       </div>
       {editingRule && <TierForm key={tier.id} tier={tier} allTiers={tiers} onDone={() => setEditingRule(false)} />}
 
-      <div className={`rounded-md border p-3 text-sm ${missingCount ? "border-amber-400" : ""}`}>
-        {missingCount === 0 ? (
-          "Every active dish and option has a price on this tier."
-        ) : (
-          <>
-            <b>{missingCount} active item(s) have no price on this tier</b> and will not appear on menus for companies using it:{" "}
-            {[...(missing?.dishes.map((d) => d.name) ?? []), ...(missing?.options.map((o) => `${o.name} (option)`) ?? [])].join(", ")}
-          </>
-        )}
-        <label className="mt-2 flex items-center gap-1.5">
-          <input type="checkbox" checked={onlyMissing} onChange={(e) => setOnlyMissing(e.target.checked)} /> Show only items with no price
-        </label>
+      <div className={`space-y-3 rounded-lg border p-3 text-sm ${missingCount ? "border-amber-400" : ""}`}>
+        <p>
+          {missingCount === 0 ? (
+            "Every active dish and option has a price on this tier."
+          ) : (
+            <>
+              <b>{missingCount} active item(s) have no price on this tier</b> and will not appear on menus for companies using it:{" "}
+              {[...(missing?.dishes.map((d) => d.name) ?? []), ...(missing?.options.map((o) => `${o.name} (option)`) ?? [])].join(", ")}
+            </>
+          )}
+        </p>
+        <CheckboxField label="Show only items with no price" checked={onlyMissing} onCheckedChange={setOnlyMissing} />
       </div>
 
       <h3 className="font-medium">Dishes</h3>
@@ -140,11 +142,11 @@ export default function PricingPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Pricing tiers</h1>
+      <PageHeader title="Pricing tiers" />
       <div className="flex flex-wrap items-center gap-2">
         {tiers.map((t) => (
           <Button key={t.id} size="sm" variant={t.id === selected?.id ? "default" : "outline"} onClick={() => { setSelectedId(t.id); setCreating(false); }}>
-            {t.name}{t.isDefault ? " ★" : ""}
+            {t.name}
           </Button>
         ))}
         {canEdit && <Button size="sm" variant="ghost" onClick={() => setCreating(!creating)}>{creating ? "Cancel" : "+ New tier"}</Button>}

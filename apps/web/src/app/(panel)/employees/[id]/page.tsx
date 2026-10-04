@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { PERMISSIONS } from "@fernleaf/shared";
+import { CheckboxField } from "@/components/checkbox-field";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckList } from "@/components/check-list";
@@ -78,15 +79,13 @@ function EmployeeForm({ employee }: { employee: EmployeeRow | null }) {
             <p className="mb-1 text-sm font-medium">This employee may change…</p>
             <div className="flex flex-wrap gap-4 text-sm">
               {([["canChooseAddress", "their delivery address"], ["canChangeTime", "the delivery time"], ["canChangePackaging", "the packaging"]] as const).map(([key, label]) => (
-                <label key={key} className="flex items-center gap-1.5">
-                  <input type="checkbox" checked={flags[key]} onChange={(e) => setFlags({ ...flags, [key]: e.target.checked })} /> {label}
-                </label>
+                <CheckboxField key={key} label={label} checked={flags[key]} onCheckedChange={(on) => setFlags({ ...flags, [key]: on })} />
               ))}
             </div>
           </div>
           <div><p className="mb-1 text-sm font-medium">Allergies</p><CheckList items={allergens} selected={allergenIds} onChange={setAllergenIds} /></div>
           <div><p className="mb-1 text-sm font-medium">Dietary preferences</p><CheckList items={tags} selected={tagIds} onChange={setTagIds} /></div>
-          <label className="flex items-center gap-1.5 text-sm"><input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} /> Active (can have orders placed)</label>
+          <CheckboxField label="Active (can have orders placed)" checked={active} onCheckedChange={setActive} />
           <Button type="submit" disabled={save.isPending || !companyId}>Save employee</Button>
         </form>
       </CardContent>
@@ -104,7 +103,7 @@ export default function EmployeePage({ params }: { params: Promise<{ id: string 
   if (error) return <p className="text-destructive">{error.message}</p>;
   if (!isNew && !employee) return <p className="text-muted-foreground">Loading…</p>;
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <Link className="text-sm underline" href="/employees">← All employees</Link>
       <EmployeeForm key={employee?.id ?? "new"} employee={employee ?? null} />
     </div>

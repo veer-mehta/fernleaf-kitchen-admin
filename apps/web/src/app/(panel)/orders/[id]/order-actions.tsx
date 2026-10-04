@@ -94,9 +94,9 @@ function OverrideForm({ order, onDone }: { order: OrderDetail; onDone: () => voi
   });
 
   return (
-    <form className="grid gap-3 rounded-md border p-3 md:grid-cols-4" onSubmit={(e) => { e.preventDefault(); save.mutate(); }}>
+    <form className="grid items-end gap-3 rounded-lg border p-3 md:grid-cols-[1fr_1fr_1fr_auto]" onSubmit={(e) => { e.preventDefault(); save.mutate(); }}>
       <label className="space-y-1 text-sm">Delivery time
-        <input type="time" className="h-9 w-full rounded-md border border-input bg-background px-2" value={time} onChange={(e) => setTime(e.target.value)} />
+        <Input type="time" className="w-full" value={time} onChange={(e) => setTime(e.target.value)} />
         {errors?.deliveryTime && <span className="text-destructive">{errors.deliveryTime}</span>}
       </label>
       <label className="space-y-1 text-sm">Address
@@ -110,7 +110,7 @@ function OverrideForm({ order, onDone }: { order: OrderDetail; onDone: () => voi
           <option value="STANDARD">Standard</option><option value="ECO">Eco</option><option value="INSULATED">Insulated</option>
         </NativeSelect>
       </label>
-      <Button type="submit" className="self-end" disabled={save.isPending}>Save changes</Button>
+      <Button type="submit" disabled={save.isPending}>Save changes</Button>
     </form>
   );
 }

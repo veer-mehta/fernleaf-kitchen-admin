@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ImageUpload } from "@/components/image-upload";
@@ -51,15 +52,15 @@ function DropCard({ drop }: { drop: DriverDrop }) {
       <p className="text-sm">{items} item(s) for {drop.orders.map((o) => o.employeeName).join(", ")}</p>
 
       {drop.status === "OUT_FOR_DELIVERY" && !open && (
-        <Button className="h-12 w-full text-base" onClick={() => setOpen(true)}>Mark delivered</Button>
+        <Button className="h-11 w-full text-base" onClick={() => setOpen(true)}>Mark delivered</Button>
       )}
       {open && (
         <form className="space-y-2" onSubmit={(e) => { e.preventDefault(); deliver.mutate(); }}>
           <Input className="h-11" placeholder="Note (optional)" aria-label="Note" value={note} onChange={(e) => setNote(e.target.value)} />
           <ImageUpload label="Delivery photo (optional)" value={photoUrl} onChange={setPhotoUrl} capture="environment" error={photoError} />
           <div className="flex gap-2">
-            <Button type="submit" className="h-12 flex-1 text-base" disabled={deliver.isPending}>Confirm delivered</Button>
-            <Button type="button" variant="outline" className="h-12" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button type="submit" className="h-11 flex-1 text-base" disabled={deliver.isPending}>Confirm delivered</Button>
+            <Button type="button" variant="outline" className="h-11" onClick={() => setOpen(false)}>Cancel</Button>
           </div>
         </form>
       )}
@@ -79,7 +80,7 @@ export default function DriverPage() {
   return (
     <div className="mx-auto max-w-md space-y-4">
       <div>
-        <h1 className="text-xl font-semibold">My deliveries</h1>
+        <PageHeader title="My deliveries" />
         {data && <p className="text-sm text-muted-foreground">{formatDate(data.date)}</p>}
       </div>
       {error && <p className="text-destructive">{error.message}</p>}
