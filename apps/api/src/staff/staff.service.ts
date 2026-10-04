@@ -65,6 +65,12 @@ export class StaffService {
     if (input.active === false && id === actorId) {
       throw new DomainError("CANNOT_DEACTIVATE_SELF", "You cannot deactivate your own account", 400);
     }
+    if (input.roleId !== undefined && id === actorId) {
+      const current = await this.prisma.staff.findUniqueOrThrow({ where: { id }, select: { roleId: true } });
+      if (input.roleId !== current.roleId) {
+        throw new DomainError("CANNOT_CHANGE_OWN_ROLE", "You cannot change your own role", 400);
+      }
+    }
     return this.prisma.staff.update({
       where: { id },
       data: {

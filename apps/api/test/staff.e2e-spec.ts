@@ -60,6 +60,15 @@ describe("staff management (e2e)", () => {
     expect(res.body.code).toBe("CANNOT_DEACTIVATE_SELF");
   });
 
+  it("an admin cannot change their own role", async () => {
+    const admin = await loginAs(app, "admin@test.com");
+    const me = await admin.get("/auth/me");
+    const res = await admin.patch(`/staff/${me.body.id}`).send({ roleId: await kitchenRoleId() });
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe("CANNOT_CHANGE_OWN_ROLE");
+    expect((await admin.get("/auth/me")).body.role).toBe("Admin");
+  });
+
   it("changing a role takes effect on the very next request", async () => {
     const admin = await loginAs(app, "admin@test.com");
     const driver = await loginAs(app, "driver@test.com");

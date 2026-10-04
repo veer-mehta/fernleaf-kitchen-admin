@@ -62,7 +62,7 @@ function StaffLine({ person, roles, canEdit, isMe }: { person: StaffRow; roles: 
       <TableCell>{person.name}{isMe && <span className="text-muted-foreground"> (you)</span>}</TableCell>
       <TableCell>{person.email}</TableCell>
       <TableCell>
-        {canEdit ? (
+        {canEdit && !isMe ? (
           <NativeSelect aria-label={`Role of ${person.name}`} value={person.role.id} onChange={(e) => update.mutate({ roleId: Number(e.target.value) })}>
             {roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
           </NativeSelect>
